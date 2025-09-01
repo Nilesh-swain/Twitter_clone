@@ -1,0 +1,41 @@
+STEP-1:- 
+
+Server.js:
+    import express from 'express';
+ 
+    const app= express();
+    const port = 8000;
+
+    app.use("/api/auth",authRoutes);
+
+    app.listen(port, () => {
+        console.log(`Server is running on http://localhost:${port}`);
+    })
+
+STEP-2
+
+Server.js :
+    import express from 'express';
+    import authRouter from './router/auth.router.js';
+ 
+    const app= express();
+    const port = 8000;
+
+    app.use('/api/auth', authRouter);
+
+    app.listen(port, () => {
+        console.log(`Server is running on http://localhost:${port}`);
+    }); 
+Router:-
+    import express from 'express';
+
+    const router = express.Router();
+
+    router.get('/login', (req, res) => {
+        res.send('Login Page');
+    });
+
+    export default router;  
+
+STEP-3
+
