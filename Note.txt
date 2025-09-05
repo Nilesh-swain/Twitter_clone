@@ -38,4 +38,423 @@ Router:-
     export default router;  
 
 STEP-3
+Server.js:- 
+    import express from 'express';
+    import authRouter from './router/auth.router.js';
+ 
+    const app= express();
+    const port = 8000;
 
+    app.use('/api/auth', authRouter);
+
+    app.listen(port, () => {
+        console.log(`Server is running on http://localhost:${port}`);
+    }); 
+Router:-
+    import express from 'express';
+    import { Login, SingUp, SingIn } from '../controller/auth.controller.js';
+
+    const router = express.Router();
+
+    router.get('/login', Login);
+    router.get('/singup', SingUp);
+    router.get('/singin', SingIn);
+
+    export default router;
+controller:-
+    export const Login = async(req,res)=>{
+        res.json({ message: "Login Page" })
+
+    }
+    export const SingUp = async(req,res)=>{
+      res.json({ message: "Sing-Up Page" })
+
+    }
+    export const SingIn = async(req,res)=>{
+        res.json({ message: "Sing-in Page" })
+    }   
+
+STEP-4
+server:- 
+    import express from 'express';
+    import authRouter from './router/auth.router.js';
+    import connectMangoDB from './DB/connectmangodb.js';
+
+    // This bellows 2 lines will used for to access .env file
+    import dotenv from 'dotenv';
+    dotenv.config();
+
+    const app= express();
+    const port = process.env.PORT || 9000;
+
+    app.use('/api/auth', authRouter); // Mount the auth router.
+
+    app.listen(port, () => {
+        console.log(`Server is running on http://localhost:${port}`);
+        connectMangoDB();
+    });
+router:-
+    import express from 'express';
+    import { Login, SingUp, SingIn } from '../controller/auth.controller.js';
+
+    const router = express.Router();
+
+    router.get('/login', Login);
+    router.get('/singup', SingUp);
+    router.get('/singin', SingIn);
+
+    export default router;
+controller:-
+    export const Login = async(req,res)=>{
+        res.json({ message: "Login Page" })
+
+    }
+    export const SingUp = async(req,res)=>{
+      res.json({ message: "Sing-Up Page" })
+
+    }
+    export const SingIn = async(req,res)=>{
+        res.json({ message: "Sing-in Page" })
+    }
+dbconnect:- // it is for connect mongodb. 
+    import mangoose from 'mongoose';
+
+    const connectMangoDB = async()=>{
+        try {
+            await mangoose.connect(process.env.MONGO_URL);
+            console.log('MongoDB connected successfully');
+        
+        } catch (error) {
+            console.error('Error connecting to MongoDB:', error);
+            process.exit(1);
+        }
+    }
+
+    export default connectMangoDB;
+
+STEP-5
+controller:-
+    export const SingUp = async(req,res)=>{ 
+    const { fullname, username, email, passward} = req.body;
+    const emailregex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(!emailregex.test(email)){
+        return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    const existinguser = await user.findone({ username });
+    if(existinguser){
+        res.status(400).json({error: "Username already exists"});
+    }
+
+    const existingemail = await user.find({ emaill})
+    if(existingemail){
+        res.status(400).json({error: "Email already exists"});
+    }
+
+    const passwardregex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if(!passwardregex.test(passward)){
+        return res.status(400).json({ error: "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character." });
+    }
+
+    const newUser = new user({
+        fullname: fullname,
+        username: username,
+        email: email,
+        passward: passward
+    })
+
+    if(newuser){
+        generateTokenAndSetCookie(newUser._id,res)
+        await newUser.save();
+        res.status(201).json({
+            _id: new
+        })
+    }
+
+    }
+    export const Login = async(req,res)=>{
+        res.json({ message: "Login Page" })
+
+    }
+    export const SingIn = async(req,res)=>{
+        res.json({ message: "Sing-in Page" })
+    }   
+
+generateTokenAndSetCookie(newUser._id,res) why it is used:-
+
+ - Generates a token (often a JWT) based on the user’s ID (newUser._id).
+ - This token typically contains encoded information (like the user ID) that the server can later verify to authenticate the user.
+ - Example: jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' })
+ - Sets the token as a cookie in the response (res) that’s sent back to the browser.
+ - This means when the browser gets the response, it automatically stores that cookie.
+ - Cookies can then be sent automatically with every request to your server, making authentication seamless.
+
+
+STEP-6 (AFTER FIXED THE ERROR)
+    import User from "../model/user.model.js";
+    export const SingUp = async(req,res)=>{
+       try {
+        const { fullname, username, email, password } = req.body;
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: "Invalid email format" });
+        }
+
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ error: "Username already exists" });
+        }
+
+        const existingEmail = await User.findOne({ email });
+        if (existingEmail) {
+            return res.status(400).json({ error: "Email already exists" });
+        }
+
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({
+                error:
+                    "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character."
+            });
+        }
+
+        // Create a new user
+        const newUser = new User({
+            fullname,
+            username,
+            email,
+            password // <-- should be hashed!
+        });
+
+        await newUser.save();
+
+        res.status(201).json({
+            _id: newUser._id,
+            fullname: newUser.fullname,
+            username: newUser.username,
+            email: newUser.email,
+            followers: newUser.followers,
+            following: newUser.following,
+            profileImg: newUser.profileImg,
+            coverImg: newUser.coverImg
+        });
+    } catch (error) {
+    console.error("Error in signup controller:", error.message);
+    res.status(500).json({ error: "Invalid user data" });
+    }
+    }
+    export const Login = async(req,res)=>{
+    res.json({ message: "Login Page" })
+
+    }
+    export const SingIn = async(req,res)=>{
+    res.json({ message: "Sing-in Page" })
+    }   
+MODEL.JS:-
+    import mongoose from "mongoose";
+
+    const userSchema = new mongoose.Schema(
+    {
+        username: {
+        type: String,
+        required: true,
+        uniqe: true,
+        },
+        fullname: {
+         type: String,
+         required: true,
+        },
+        email: {
+          type: String,
+          required: true,
+          uniqe: true,
+         },
+         password: {
+         type: String,
+         required: true,
+         minLength: 6,
+        },
+        followers: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: [],
+          },
+        ],
+        following: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: [],
+          },
+        ],
+        profileImg: {
+          type: String,
+          default: "",
+        },
+        coverImg: {
+          type: String,
+        },
+        bio: {
+          type: String,
+          default: "",
+        },
+        link: {
+          type: String,
+          default: "",
+        },
+      },    
+     { timestamps: true }
+    );
+
+    const User = mongoose.model("User", userSchema);
+    export default User;
+
+STEP=7:-
+    
+try {
+//     const { username, password } = req.body;
+//     if (!username || !password) {
+//       return res
+//         .status(400)
+//         .json({ error: "All fields are required: username, password" });
+//     }
+//     const user = await User.findOne({ username });
+//     if (!user) {
+//       return res.status(400).json({ error: "Invalid credentials" });
+//     }
+//     const isPasswordCorrect = await bcrypt.compare(password, user.password);
+//     if (!isPasswordCorrect) {
+//       return res.status(400).json({ error: "Invalid credentials" });
+//     }
+//     res.status(200).json({
+//       _id: user._id,
+//       fullname: user.fullname,
+//       username: user.username,
+//       email: user.email,
+//       followers: user.followers,
+//       following: user.following,
+//       profileImg: user.profileImg,
+//       coverImg: user.coverImg,
+//     });
+//   } catch (error) {
+//     console.error("Error in Login controller:", error.message);
+//     res.status(500).json({ error: "Invalid user data" });
+//   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Note:-    import User from "../model/user.model.js";
+import bcrypt from "bcrypt";
+
+export const SingUp = async (req, res) => {
+  try {
+    const { fullname, username, email, password } = req.body;
+    if (!fullname || !username || !email || !password) {
+      return res
+        .status(400)
+        .json({
+          error: "All fields are required: fullname, username, email, password",
+        });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ error: "Username already exists" });
+    }
+
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        error:
+          "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.",
+      });
+    }
+
+    // Hash the password before saving
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({
+      fullname,
+      username,
+      email,
+      password: hashedPassword,
+    });
+
+    await newUser.save();
+
+    res.status(201).json({
+      _id: newUser._id,
+      fullname: newUser.fullname,
+      username: newUser.username,
+      email: newUser.email,
+      followers: newUser.followers,
+      following: newUser.following,
+      profileImg: newUser.profileImg,
+      coverImg: newUser.coverImg,
+    });
+  } catch (error) {
+    console.error("Error in signup controller:", error.message);
+    res.status(500).json({ error: "Invalid user data" });
+  }
+};
+
+
+export const Login = async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ error: "All fields are required: username, password" });
+    }
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
+    res.status(200).json({
+      _id: user._id,
+      fullname: user.fullname,
+      username: user.username,
+      email: user.email,
+      followers: user.followers,
+      following: user.following,
+      profileImg: user.profileImg,
+      coverImg: user.coverImg,
+    });
+  } catch (error) {
+    console.error("Error in Login controller:", error.message);
+    res.status(500).json({ error: "Invalid user data" });
+  }
+};
+export const SingIn = async (req, res) => {
+  res.json({ message: "Sing-in Page" });
+};
