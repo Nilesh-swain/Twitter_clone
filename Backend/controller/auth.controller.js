@@ -13,21 +13,17 @@ export const SignUp = async (req, res) => {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: "Invalid email format" });
     }
 
     // Check if username or email already exists
-    if (await User.findOne({ username })) {
-      return res.status(400).json({ error: "Username already exists" });
-    }
-    if (await User.findOne({ email })) {
-      return res.status(400).json({ error: "Email already exists" });
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res.status(400).json({ error: "Username or email already exists" });
     }
 
-    // Password validation
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(password)) {
@@ -38,9 +34,8 @@ export const SignUp = async (req, res) => {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10); // if it is not pressent then We can't cheack the passward it is correct or wrong.
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
     const newUser = new User({
       fullname,
       username,
@@ -83,19 +78,17 @@ export const Login = async (req, res) => {
       return res.status(400).json({ error: "Incorrect password" });
     }
 
-    // Generate JWT token
     const token = jwt.sign(
       { id: user._id, username: user.username },
       process.env.JWT_SECRET || "your_jwt_secret",
       { expiresIn: "15d" }
     );
 
-    // Send token in cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+      sameSite: "lax", // safer cross-site behavior
+      maxAge: 15 * 24 * 60 * 60 * 1000,
     });
 
     return res.status(200).json({
@@ -106,7 +99,7 @@ export const Login = async (req, res) => {
       followers: user.followers,
       following: user.following,
       profileImg: user.profileImg,
-      token, // optional: return token in response too
+      token,
     });
   } catch (error) {
     console.error("Error in Login:", error.message);
@@ -119,13 +112,11 @@ export const Login = async (req, res) => {
 // =========================
 export const LogOut = async (req, res) => {
   try {
-    // Clear the token cookie
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
     });
-
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Error in LogOut:", error.message);
@@ -133,4 +124,15 @@ export const LogOut = async (req, res) => {
   }
 };
 
-
+// =========================
+// GET ME
+// =========================
+export const GetMe = async (req, res) => {
+  try {
+    const me = await User.findById(req.user._id).select("-password");
+    res.status(200).json(me);
+  } catch (error) {
+    console.error("Error in GetMe:", error.message);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
