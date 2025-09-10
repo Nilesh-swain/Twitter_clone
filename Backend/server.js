@@ -4,6 +4,7 @@ import {v2 as cloudinary} from 'cloudinary';
 
 import authRouter from './router/auth.router.js';
 import userRouter from './router/user.router.js';
+import postRouter from './router/post.router.js';
 
 import connectMangoDB from './DB/connectmangodb.js';
 
@@ -28,6 +29,7 @@ app.use(cookieparser());
 
 app.use('/api/auth', authRouter); // Mount the auth router.
 app.use('/api/user', userRouter); // Mount the user router.
+app.use('/api/post', postRouter); // Mount the post router.
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
