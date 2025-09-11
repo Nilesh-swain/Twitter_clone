@@ -26,7 +26,7 @@ export const createpost = async (req, res) => {
     const newPost = new Post({
       user: userId,
       text,
-      img: imageUrl
+      img: imageUrl,
     });
 
     await newPost.save();
@@ -114,7 +114,7 @@ export const likeUnlikePost = async (req, res) => {
       const notification = new Notification({
         from: userId,
         to: post.user,
-        type: "like"
+        type: "like",
       });
       await notification.save();
 
@@ -133,7 +133,7 @@ export const GetallPosts = async (req, res) => {
       .populate("user", "-password")
       .populate({
         path: "comments.user",
-        select: "-password"
+        select: "-password",
       });
     if (posts.length === 0) {
       return res.status(200).json([]);
@@ -157,7 +157,7 @@ export const GetLikedPosts = async (req, res) => {
       .populate("user", "-password")
       .populate({
         path: "comments.user",
-        select: "-password"
+        select: "-password",
       });
 
     return res.status(200).json(likedPosts);
@@ -181,7 +181,7 @@ export const GetFollowingPosts = async (req, res) => {
       .populate("user", "-password")
       .populate({
         type: "comments.user",
-        select: "-password"
+        select: "-password",
       });
 
     return res.status(200).json(posts);
@@ -189,7 +189,7 @@ export const GetFollowingPosts = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
     console.error("Error in GetFollowingPosts:", error);
   }
-}
+};
 
 export const getUserPost = async (req, res) => {
   try {
@@ -202,8 +202,8 @@ export const getUserPost = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate("user", "-password")
       .populate({
-        type : "comments.user",
-        select: "-password"
+        type: "comments.user",
+        select: "-password",
       });
     return res.status(200).json(posts);
   } catch (error) {

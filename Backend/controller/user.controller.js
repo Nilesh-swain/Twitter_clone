@@ -81,12 +81,11 @@
 
 // controllers/user.controller.js
 import bcrypt from "bcryptjs";
-import {v2 as cloudinary} from 'cloudinary';
+import { v2 as cloudinary } from "cloudinary";
 
 import mongoose from "mongoose";
 import User from "../model/user.model.js";
 import Notification from "../model/notification.model.js"; // ✅ make sure this path matches your file
-
 
 // =========================
 // GET PROFILE
@@ -106,7 +105,9 @@ export const GetProfile = async (req, res) => {
     return res.status(200).json(user);
   } catch (error) {
     console.error("Error in GetProfile:", error);
-    return res.status(500).json({ error: "Something went wrong in getProfile." });
+    return res
+      .status(500)
+      .json({ error: "Something went wrong in getProfile." });
   }
 };
 
@@ -117,11 +118,13 @@ export const FollowUnfollow = async (req, res) => {
   try {
     // Must be authenticated
     if (!req.user || !req.user._id) {
-      return res.status(401).json({ error: "Unauthorized: user not authenticated" });
+      return res
+        .status(401)
+        .json({ error: "Unauthorized: user not authenticated" });
     }
 
-    const { id } = req.params;           // target user id
-    const currentUserId = req.user._id;  // logged in user id (ObjectId)
+    const { id } = req.params; // target user id
+    const currentUserId = req.user._id; // logged in user id (ObjectId)
 
     // Validate target id
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -130,7 +133,9 @@ export const FollowUnfollow = async (req, res) => {
 
     // Prevent self-follow
     if (String(currentUserId) === String(id)) {
-      return res.status(400).json({ error: "You cannot follow/unfollow yourself." });
+      return res
+        .status(400)
+        .json({ error: "You cannot follow/unfollow yourself." });
     }
 
     // Fetch target user
@@ -149,7 +154,11 @@ export const FollowUnfollow = async (req, res) => {
       await Promise.all([
         User.findByIdAndUpdate(id, { $pull: { followers: currentUserId } }),
         User.findByIdAndUpdate(currentUserId, { $pull: { following: id } }),
-        Notification.deleteMany({ from: currentUserId, to: id, type: "follow" }), // clean old notifications
+        Notification.deleteMany({
+          from: currentUserId,
+          to: id,
+          type: "follow",
+        }), // clean old notifications
       ]);
 
       return res.status(200).json({ message: "User unfollowed successfully." });
@@ -179,10 +188,11 @@ export const FollowUnfollow = async (req, res) => {
     console.error("Error in FollowUnfollow user:", error);
     return res
       .status(500)
-      .json({ error: error.message || "Something went wrong in FollowUnfollow user." });
+      .json({
+        error: error.message || "Something went wrong in FollowUnfollow user.",
+      });
   }
 };
-
 
 // ==========================
 // GET SUGGESTIONS
@@ -207,46 +217,68 @@ export const GetSuggestions = async (req, res) => {
     return res.status(200).json(suggestedUsers);
   } catch (error) {
     console.error("Error in GetSuggestions:", error);
-    return res.status(500).json({ error: "Something went wrong in GetSuggestions." });
+    return res
+      .status(500)
+      .json({ error: "Something went wrong in GetSuggestions." });
   }
 };
 
 export const UpdateUser = async (req, res) => {
-  const {fullname, email, username, currentPassword, newPassword, bio, link } = req.body;
+  const { fullname, email, username, currentPassword, newPassword, bio, link } =
+    req.body;
   let { profileImg, coverImg } = req.body;
   try {
     let user = await User.findById(req.user._id);
-    if(!user){
+    if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    if(( !currentPassword && newPassword ) || (currentPassword && !newPassword )){
-      return res.status(400).json({ error: "Both current and new passwords are required to change password." });
+    if (
+      (!currentPassword && newPassword) ||
+      (currentPassword && !newPassword)
+    ) {
+      return res
+        .status(400)
+        .json({
+          error:
+            "Both current and new passwords are required to change password.",
+        });
     }
-    if(currentPassword && newPassword){
-      const isPasswordCorrect = await bcrypt.compare(currentPassword, user.password);
-      if(!isPasswordCorrect){
-        return res.status(400).json({ error: "Current password is incorrect." });
+    if (currentPassword && newPassword) {
+      const isPasswordCorrect = await bcrypt.compare(
+        currentPassword,
+        user.password
+      );
+      if (!isPasswordCorrect) {
+        return res
+          .status(400)
+          .json({ error: "Current password is incorrect." });
       }
-      if(newPassword.length < 6){
-        return res.status(400).json({ error: "New password must be at least 6 characters long." });
+      if (newPassword.length < 6) {
+        return res
+          .status(400)
+          .json({ error: "New password must be at least 6 characters long." });
       }
 
       const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(newPassword, salt); 
+      user.password = await bcrypt.hash(newPassword, salt);
     }
 
-    if(profileImg){
+    if (profileImg) {
       //it is for delecting the old image from the cloudinary.
-      if(user.profileImg){
-        await cloudinary.uploader.destroy(user.profileImg.split('/').pop().split('.')[0]  );
+      if (user.profileImg) {
+        await cloudinary.uploader.destroy(
+          user.profileImg.split("/").pop().split(".")[0]
+        );
       }
       const uploadResponse = await cloudinary.uploader.upload(profileImg);
       profileImg = uploadResponce.secure_url;
     }
-    if(coverImg){
-       //it is for delecting the old image from the cloudinary.
-      if(user.profileImg){
-        await cloudinary.uploader.destroy(user.profileImg.split('/').pop().split('.')[0]  );
+    if (coverImg) {
+      //it is for delecting the old image from the cloudinary.
+      if (user.profileImg) {
+        await cloudinary.uploader.destroy(
+          user.profileImg.split("/").pop().split(".")[0]
+        );
       }
       const uploadResponse = await cloudinary.uploader.upload(profileImg);
       coverImg = uploadResponce.secure_url;
@@ -264,7 +296,8 @@ export const UpdateUser = async (req, res) => {
     return res.status(200).json(user);
   } catch (error) {
     console.error("Error in UpdateUser:", error);
-    return res.status(500).json({ error: "Something went wrong in UpdateUser." });
-    
+    return res
+      .status(500)
+      .json({ error: "Something went wrong in UpdateUser." });
   }
 };

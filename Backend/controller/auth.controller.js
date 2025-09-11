@@ -21,7 +21,9 @@ export const SignUp = async (req, res) => {
     // Check if username or email already exists
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
-      return res.status(400).json({ error: "Username or email already exists" });
+      return res
+        .status(400)
+        .json({ error: "Username or email already exists" });
     }
 
     const passwordRegex =
