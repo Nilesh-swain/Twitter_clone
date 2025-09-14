@@ -26,23 +26,23 @@ export const delectNotification = async (req, res) => {
   }
 };
 
-// export const delectOneNotification = async (req, res) => {
-//   try {
-//     const notificationId = req.prams.id;
-//     const userId = req.user._id;
-//     const notification = await Notification.find(notificationId);
-//     if (!notification) {
-//       res.status(402).json({ error: "Notification is Not Found." });
-//     }
-//     if (notification.to.tostring() !== userId.tostring()) {
-//       res.status(403).json({ error: "You don't delete this notification." });
-//     }
+export const delectOneNotification = async (req, res) => {``
+  try {
+    const notificationId = req.prams.id;
+    const userId = req.user._id;
+    const notification = await Notification.find(notificationId);
+    if (!notification) {
+      res.status(402).json({ error: "Notification is Not Found." });
+    }
+    if (notification.to.tostring() !== userId.tostring()) {
+      res.status(403).json({ error: "You don't delete this notification." });
+    }
 
-//     await Notification.findByIdAndDelete(notificationId);
-//     res
-//       .status(200)
-//       .json({ message: "this notification will delected sucessfully." });
-//   } catch (error) {
+    await Notification.findByIdAndDelete(notificationId);
+    res
+      .status(200)
+      .json({ message: "this notification will delected sucessfully." });
+  } catch (error) {
 
-//   }
-// };
+  }
+};

@@ -1,5 +1,5 @@
 import express from "express";
-import protectRoute from "../middleware/protectRoute";
+import protectRoute from "../middleware/protectRoute.js"; // ✅ keep only this one
 
 import {
   getNotification,
@@ -7,10 +7,9 @@ import {
   // delectOneNotification,
 } from "../controller/notification.controller.js";
 
-import { protectRoute } from "../middleware/protectRoute";
-
 const router = express.Router();
 
+// Routes
 router.get("/", protectRoute, getNotification);
 router.delete("/delect", protectRoute, delectNotification);
 // router.delete("/delete/:id", protectRoute, delectOneNotification);
