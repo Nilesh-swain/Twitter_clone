@@ -1,25 +1,24 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import HomePage from "./pages/home/HomePage";
-import SignUpPage from "./pages/auth/signup/SignUpPage";
-import LoginPage from "./pages/auth/login/LoginPage";
-import Sidebar from "./components/common/Sidebar";
-import RightPanel from "./components/common/RightPanel";
+import { Routes, Route, Router } from "react-router-dom";
+import Homepage from "./pages/home/Homepage.jsx";
+import SignUpPage from "./pages/auth/signup/SignUpPage.jsx";
+import LoginPage from "./pages/auth/login/LoginPage.jsx";
+import Sidebar from "./components/common/Sidebar.jsx";
+import RightPanel from "./components/common/RightPanel.jsx";
+import Notification from "./pages/notification/NotificationPage.jsx";
 
 function App() {
   return (
-    <Router>
-      <div className="flex max-w-6xl mx-auto">
-        <Sidebar />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/login" element={<LoginPage />} />
-        </Routes>
-      </div>
+    <div className="flex max-w-6xl mx-auto">
+      {/* it is a comment component . */}
+      <Sidebar />
+      <Routes>
+        <Route path="/" element={<Homepage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/notification" element={<Notification />} />
+      </Routes>
       <RightPanel />
-      
-    </Router>
+    </div>
   );
 }
 

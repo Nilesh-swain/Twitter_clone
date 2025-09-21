@@ -4,9 +4,9 @@ export const POSTS = [
 		text: "Let's build a fullstack WhatsApp clone with NEXT.JS 14 😍",
 		img: "/posts/post1.png",
 		user: {
-			username: "Nilesh",
+			username: "johndoe",
 			profileImg: "/avatars/boy1.png",
-			fullName: "NILESH SWAIN",
+			fullName: "John Doe",
 		},
 		comments: [
 			{
