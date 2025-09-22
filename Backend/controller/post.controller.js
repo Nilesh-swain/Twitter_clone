@@ -180,7 +180,7 @@ export const GetFollowingPosts = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate("user", "-password")
       .populate({
-        type: "comments.user",
+        path: "comments.user",
         select: "-password",
       });
 
@@ -194,7 +194,7 @@ export const GetFollowingPosts = async (req, res) => {
 export const getUserPost = async (req, res) => {
   try {
     const { username } = req.params;
-    const user = await user.findone({ username });
+    const user = await User.findOne({ username });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -202,7 +202,7 @@ export const getUserPost = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate("user", "-password")
       .populate({
-        type: "comments.user",
+        path: "comments.user",
         select: "-password",
       });
     return res.status(200).json(posts);

@@ -186,11 +186,9 @@ export const FollowUnfollow = async (req, res) => {
     }
   } catch (error) {
     console.error("Error in FollowUnfollow user:", error);
-    return res
-      .status(500)
-      .json({
-        error: error.message || "Something went wrong in FollowUnfollow user.",
-      });
+    return res.status(500).json({
+      error: error.message || "Something went wrong in FollowUnfollow user.",
+    });
   }
 };
 
@@ -236,12 +234,10 @@ export const UpdateUser = async (req, res) => {
       (!currentPassword && newPassword) ||
       (currentPassword && !newPassword)
     ) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Both current and new passwords are required to change password.",
-        });
+      return res.status(400).json({
+        error:
+          "Both current and new passwords are required to change password.",
+      });
     }
     if (currentPassword && newPassword) {
       const isPasswordCorrect = await bcrypt.compare(
@@ -264,24 +260,24 @@ export const UpdateUser = async (req, res) => {
     }
 
     if (profileImg) {
-      //it is for delecting the old image from the cloudinary.
+      //it is for deleting the old image from the cloudinary.
       if (user.profileImg) {
         await cloudinary.uploader.destroy(
           user.profileImg.split("/").pop().split(".")[0]
         );
       }
       const uploadResponse = await cloudinary.uploader.upload(profileImg);
-      profileImg = uploadResponce.secure_url;
+      profileImg = uploadResponse.secure_url;
     }
     if (coverImg) {
-      //it is for delecting the old image from the cloudinary.
-      if (user.profileImg) {
+      //it is for deleting the old image from the cloudinary.
+      if (user.coverImg) {
         await cloudinary.uploader.destroy(
-          user.profileImg.split("/").pop().split(".")[0]
+          user.coverImg.split("/").pop().split(".")[0]
         );
       }
-      const uploadResponse = await cloudinary.uploader.upload(profileImg);
-      coverImg = uploadResponce.secure_url;
+      const uploadResponse = await cloudinary.uploader.upload(coverImg);
+      coverImg = uploadResponse.secure_url;
     }
     user.fullname = fullname || user.fullname;
     user.email = email || user.email;

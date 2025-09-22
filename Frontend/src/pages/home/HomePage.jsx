@@ -1,45 +1,51 @@
 import { useState } from "react";
-
-import Posts from "../../components/common/Posts";
-import CreatePost from "./CreatePost";
+import Posts from "../../components/common/Posts.jsx";
+import CreatePost from "./CreatePost.jsx";
 
 const HomePage = () => {
-	const [feedType, setFeedType] = useState("forYou");
+  const [feedType, setFeedType] = useState("forYou");
 
-	return (
-		<>
-			<div className='flex-[4_4_0] mr-auto border-r border-gray-700 min-h-screen'>
-				{/* Header */}
-				<div className='flex w-full border-b border-gray-700'>
-					<div
-						className={
-							"flex justify-center flex-1 p-3 hover:bg-secondary transition duration-300 cursor-pointer relative"
-						}
-						onClick={() => setFeedType("forYou")}
-					>
-						For you
-						{feedType === "forYou" && (
-							<div className='absolute bottom-0 w-10  h-1 rounded-full bg-primary'></div>
-						)}
-					</div>
-					<div
-						className='flex justify-center flex-1 p-3 hover:bg-secondary transition duration-300 cursor-pointer relative'
-						onClick={() => setFeedType("following")}
-					>
-						Following
-						{feedType === "following" && (
-							<div className='absolute bottom-0 w-10  h-1 rounded-full bg-primary'></div>
-						)}
-					</div>
-				</div>
+  return (
+    <div className="min-h-screen border-r border-gray-800">
+      {/* Header */}
+      <div className="sticky top-0 bg-black/80 backdrop-blur-md border-b border-gray-800 z-10">
+        <div className="flex">
+          <button
+            className={`flex-1 py-4 px-6 text-center font-semibold transition-colors relative ${
+              feedType === "forYou"
+                ? "text-white"
+                : "text-gray-500 hover:text-gray-300"
+            }`}
+            onClick={() => setFeedType("forYou")}
+          >
+            For you
+            {feedType === "forYou" && (
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-primary rounded-full"></div>
+            )}
+          </button>
+          <button
+            className={`flex-1 py-4 px-6 text-center font-semibold transition-colors relative ${
+              feedType === "following"
+                ? "text-white"
+                : "text-gray-500 hover:text-gray-300"
+            }`}
+            onClick={() => setFeedType("following")}
+          >
+            Following
+            {feedType === "following" && (
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-primary rounded-full"></div>
+            )}
+          </button>
+        </div>
+      </div>
 
-				{/*  CREATE POST INPUT */}
-				<CreatePost />
+      {/* Create Post */}
+      <CreatePost />
 
-				{/* POSTS */}
-				<Posts />
-			</div>
-		</>
-	);
+      {/* Posts Feed */}
+      <Posts feedType={feedType} />
+    </div>
+  );
 };
+
 export default HomePage;

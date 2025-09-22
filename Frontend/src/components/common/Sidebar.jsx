@@ -1,75 +1,120 @@
-import XSvg from "../svgs/X";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext.jsx";
+import XSvg from "../svgs/X.jsx";
 
-import { MdHomeFilled } from "react-icons/md";
-import { IoNotifications } from "react-icons/io5";
-import { FaUser } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { MdHomeFilled, MdHome } from "react-icons/md";
+import { IoNotifications, IoNotificationsOutline } from "react-icons/io5";
+import { FaUser, FaRegUser } from "react-icons/fa";
 import { BiLogOut } from "react-icons/bi";
+import { HiOutlineDotsHorizontal } from "react-icons/hi";
 
 const Sidebar = () => {
-	const data = {
-		fullName: "John Doe",
-		username: "johndoe",
-		profileImg: "/avatars/boy1.png",
-	};
+  const { user, logout } = useAuth();
+  const location = useLocation();
 
-	return (
-		<div className='md:flex-[2_2_0] w-18 max-w-52'>
-			<div className='sticky top-0 left-0 h-screen flex flex-col border-r border-gray-700 w-20 md:w-full'>
-				<Link to='/' className='flex justify-center md:justify-start'>
-					<XSvg className='px-2 w-12 h-12 rounded-full fill-white hover:bg-stone-900' />
-				</Link>
-				<ul className='flex flex-col gap-3 mt-4'>
-					<li className='flex justify-center md:justify-start'>
-						<Link
-							to='/'
-							className='flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full duration-300 py-2 pl-2 pr-4 max-w-fit cursor-pointer'
-						>
-							<MdHomeFilled className='w-8 h-8' />
-							<span className='text-lg hidden md:block'>Home</span>
-						</Link>
-					</li>
-					<li className='flex justify-center md:justify-start'>
-						<Link
-							to='/notifications'
-							className='flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full duration-300 py-2 pl-2 pr-4 max-w-fit cursor-pointer'
-						>
-							<IoNotifications className='w-6 h-6' />
-							<span className='text-lg hidden md:block'>Notifications</span>
-						</Link>
-					</li>
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
-					<li className='flex justify-center md:justify-start'>
-						<Link
-							to={`/profile/${data?.username}`}
-							className='flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full duration-300 py-2 pl-2 pr-4 max-w-fit cursor-pointer'
-						>
-							<FaUser className='w-6 h-6' />
-							<span className='text-lg hidden md:block'>Profile</span>
-						</Link>
-					</li>
-				</ul>
-				{data && (
-					<Link
-						to={`/profile/${data.username}`}
-						className='mt-auto mb-10 flex gap-2 items-start transition-all duration-300 hover:bg-[#181818] py-2 px-4 rounded-full'
-					>
-						<div className='avatar hidden md:inline-flex'>
-							<div className='w-8 rounded-full'>
-								<img src={data?.profileImg || "/avatar-placeholder.png"} />
-							</div>
-						</div>
-						<div className='flex justify-between flex-1'>
-							<div className='hidden md:block'>
-								<p className='text-white font-bold text-sm w-20 truncate'>{data?.fullName}</p>
-								<p className='text-slate-500 text-sm'>@{data?.username}</p>
-							</div>
-							<BiLogOut className='w-5 h-5 cursor-pointer' />
-						</div>
-					</Link>
-				)}
-			</div>
-		</div>
-	);
+  const navigationItems = [
+    {
+      name: "Home",
+      href: "/",
+      icon: MdHome,
+      activeIcon: MdHomeFilled,
+    },
+    {
+      name: "Notifications",
+      href: "/notification",
+      icon: IoNotificationsOutline,
+      activeIcon: IoNotifications,
+    },
+    {
+      name: "Profile",
+      href: `/profile/${user?.username}`,
+      icon: FaRegUser,
+      activeIcon: FaUser,
+    },
+  ];
+
+  const isActive = (href) => {
+    if (href === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(href);
+  };
+
+  return (
+    <div className="h-screen flex flex-col border-r border-gray-800">
+      {/* Logo */}
+      <div className="p-4">
+        <Link to="/" className="inline-block">
+          <XSvg className="w-8 h-8 fill-white hover:fill-primary transition-colors" />
+        </Link>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 px-2 py-4">
+        <ul className="space-y-1">
+          {navigationItems.map((item) => {
+            const Icon = isActive(item.href) ? item.activeIcon : item.icon;
+            return (
+              <li key={item.name}>
+                <Link
+                  to={item.href}
+                  className={`twitter-sidebar-item group ${
+                    isActive(item.href) ? "active" : ""
+                  }`}
+                >
+                  <Icon className="w-6 h-6" />
+                  <span className="text-xl font-normal group-hover:font-semibold transition-all">
+                    {item.name}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* User Profile */}
+      {user && (
+        <div className="p-4 border-t border-gray-800">
+          <div className="flex items-center justify-between p-3 rounded-full hover:bg-gray-900 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full overflow-hidden">
+                <img
+                  src={user?.profileImg || "/avatar-placeholder.png"}
+                  alt={user?.fullname}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="hidden lg:block">
+                <p className="font-semibold text-sm">{user?.fullname}</p>
+                <p className="text-gray-500 text-sm">@{user?.username}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="hidden lg:block p-1 rounded-full hover:bg-gray-800 transition-colors">
+                <HiOutlineDotsHorizontal className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleLogout}
+                className="p-1 rounded-full hover:bg-gray-800 transition-colors"
+                title="Logout"
+              >
+                <BiLogOut className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
+
 export default Sidebar;

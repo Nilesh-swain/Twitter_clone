@@ -1,9 +1,210 @@
-/* body {
-  background-color: black;
-  color: white; 
+@import "tailwindcss";
+@plugin "daisyui";
+
+/* Custom CSS Variables for Twitter-like Theme */
+:root {
+  --primary-color: #1d9bf0;
+  --primary-hover: #1a8cd8;
+  --secondary-color: #16181c;
+  --background-color: #000000;
+  --surface-color: #16181c;
+  --border-color: #2f3336;
+  --text-primary: #ffffff;
+  --text-secondary: #71767b;
+  --text-muted: #536471;
+  --success-color: #00ba7c;
+  --error-color: #f4212e;
+  --warning-color: #ffd400;
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
   margin: 0;
   padding: 0;
-} */
+  line-height: 1.4;
+}
 
-@plugin "daisyui";
-@import "tailwindcss";
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Custom Components */
+.twitter-button {
+  @apply bg-[var(--primary-color)] hover:bg-[var(--primary-hover)] text-white font-bold py-2 px-4 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.twitter-button-outline {
+  @apply border border-[var(--border-color)] hover:bg-[var(--surface-color)] text-white font-bold py-2 px-4 rounded-full transition-all duration-200;
+}
+
+.twitter-input {
+  @apply bg-transparent border border-[var(--border-color)] rounded-lg px-4 py-3 text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--primary-color)] transition-colors duration-200;
+}
+
+.twitter-card {
+  @apply bg-[var(--surface-color)] border border-[var(--border-color)] rounded-xl p-4 hover:bg-[#1a1a1a] transition-colors duration-200;
+}
+
+.twitter-post {
+  @apply border-b border-[var(--border-color)] hover:bg-[#0f0f0f] transition-colors duration-200;
+}
+
+.twitter-sidebar-item {
+  @apply flex items-center gap-3 px-4 py-3 rounded-full hover:bg-[var(--surface-color)] transition-colors duration-200 cursor-pointer;
+}
+
+.twitter-sidebar-item.active {
+  @apply font-bold;
+}
+
+.twitter-sidebar-item.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 4px;
+  height: 24px;
+  background-color: var(--primary-color);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  @apply animate-spin rounded-full border-2 border-[var(--border-color)] border-t-[var(--primary-color)];
+}
+
+/* Custom DaisyUI Theme Overrides */
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+}
+
+.input {
+  background-color: transparent !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.input:focus {
+  border-color: var(--primary-color) !important;
+  outline: none !important;
+}
+
+.textarea {
+  background-color: transparent !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.textarea:focus {
+  border-color: var(--primary-color) !important;
+  outline: none !important;
+}
+
+.modal-box {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+.dropdown-content {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .twitter-sidebar-item span {
+    display: none;
+  }
+
+  .twitter-sidebar-item {
+    justify-content: center;
+    padding: 12px;
+  }
+}
+
+/* Dark mode specific styles */
+[data-theme="dark"] {
+  --background-color: #000000;
+  --surface-color: #16181c;
+  --border-color: #2f3336;
+}
+
+/* Focus styles for accessibility */
+.twitter-button:focus,
+.twitter-button-outline:focus,
+.twitter-input:focus,
+.twitter-sidebar-item:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}

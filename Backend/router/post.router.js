@@ -19,7 +19,7 @@ router.get("/likes/:id", protectRoute, GetLikedPosts);
 router.post("/create", protectRoute, createpost);
 router.delete("/:id", protectRoute, deletePost);
 router.post("/like/:id", protectRoute, likeUnlikePost);
-router.post("/comment/:id", CommentOnPost);
+router.post("/comment/:id", protectRoute, CommentOnPost);
 router.get("/username/:username", protectRoute, getUserPost);
 
 export default router;
