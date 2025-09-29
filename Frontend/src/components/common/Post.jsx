@@ -5,6 +5,7 @@ import { FaRegBookmark } from "react-icons/fa6";
 import { FaTrash } from "react-icons/fa";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const Post = ({ post }) => {
   const [comment, setComment] = useState("");
@@ -17,13 +18,18 @@ const Post = ({ post }) => {
 
   const isCommenting = false;
 
-  const handleDeletePost = () => {};
+  const handleDeletePost = () => {
+    toast.success("Post deleted successfully!");
+  };
 
   const handlePostComment = (e) => {
     e.preventDefault();
+    toast.success("Comment posted!");
   };
 
-  const handleLikePost = () => {};
+  const handleLikePost = () => {
+    toast.success(isLiked ? "Post unliked!" : "Post liked!");
+  };
 
   return (
     <article className="twitter-post p-4 hover:bg-gray-900/50 transition-colors">

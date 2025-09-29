@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext.jsx";
 
@@ -22,8 +23,23 @@ const LoginPage = () => {
     setLoading(true);
     setError("");
 
+    // 🔥 Show loading → then success/error automatically
+    const loginPromise = login(formData);
+
+    toast.promise(
+      loginPromise,
+      {
+        loading: "Signing in...",
+        success: "Login successful!",
+        error: (err) => err.message || "Login failed",
+      },
+      {
+        id: "login-toast", // ensures only one toast at a time
+      }
+    );
+
     try {
-      await login(formData);
+      await loginPromise;
       navigate("/");
     } catch (error) {
       setError(error.message || "Login failed");

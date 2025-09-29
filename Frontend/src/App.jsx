@@ -8,6 +8,9 @@ import RightPanel from "./components/common/RightPanel.jsx";
 import Notification from "./pages/notification/NotificationPage.jsx";
 import ProfilePage from "./pages/profile/ProfilePage.jsx";
 
+// ✅ Import react-hot-toast
+import { Toaster } from "react-hot-toast";
+
 function App() {
   const { user, loading } = useAuth();
 
@@ -53,9 +56,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/notification" element={<Notification />} />
-            <Route
-              path="/profile/:username" element={<ProfilePage />}
-/>
+            <Route path="/profile/:username" element={<ProfilePage />} />
           </Routes>
         </div>
 

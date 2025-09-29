@@ -1,7 +1,7 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import XSvg from "../svgs/X.jsx";
-
+import toast from "react-hot-toast";
 import { MdHomeFilled, MdHome } from "react-icons/md";
 import { IoNotifications, IoNotificationsOutline } from "react-icons/io5";
 import { FaUser, FaRegUser } from "react-icons/fa";
@@ -11,10 +11,25 @@ import { HiOutlineDotsHorizontal } from "react-icons/hi";
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
+    const logoutPromise = logout();
+    toast.promise(
+      logoutPromise,
+      {
+        loading: "Logging out...",
+        success: "Logged out successfully!",
+        error: "Logout failed",
+      },
+      { id: "logout-toast" }
+    );
     try {
-      await logout();
+      await logoutPromise;
+      toast.success("Logout successfully!");
+      setTimeout(() => {
+        navigate("/login");
+      }, 1100); // Wait for toast to show (duration is 1000ms)
     } catch (error) {
       console.error("Logout error:", error);
     }
