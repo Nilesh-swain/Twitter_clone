@@ -50,6 +50,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    otp: {
+      type: String,
+      default: null,
+    },
+    otpExpires: {
+      type: Date,
+      default: null,
+    },
     likes: [
       {
         type: mongoose.Schema.Types.ObjectId,

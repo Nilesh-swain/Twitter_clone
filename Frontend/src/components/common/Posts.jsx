@@ -1,43 +1,28 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Post from "./Post.jsx";
 import PostSkeleton from "../skeletons/PostSkeleton.jsx";
 import { postAPI } from "../../utils/api.js";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 
+const fetchPosts = async (feedType) => {
+  if (feedType === "following") {
+    return postAPI.getFollowingPosts();
+  }
+  return postAPI.getAllPosts();
+};
+
 const Posts = ({ feedType = "forYou" }) => {
-  const [posts, setPosts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
   const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        setIsLoading(true);
-        setError("");
-
-        let postsData;
-        if (feedType === "following") {
-          postsData = await postAPI.getFollowingPosts();
-        } else {
-          postsData = await postAPI.getAllPosts();
-        }
-
-        setPosts(postsData);
-      } catch (error) {
-        console.error("Error fetching posts:", error);
-        setError("Failed to load posts");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchPosts();
-    } else {
-      setIsLoading(false);
-    }
-  }, [feedType, user]);
+  const {
+    data: posts,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["posts", feedType, user?._id],
+    queryFn: () => fetchPosts(feedType),
+    enabled: !!user,
+  });
 
   if (!user) {
     return (
@@ -57,7 +42,7 @@ const Posts = ({ feedType = "forYou" }) => {
         </div>
       )}
       {!isLoading && error && (
-        <p className="text-center my-4 text-red-500">{error}</p>
+        <p className="text-center my-4 text-red-500">Failed to load posts</p>
       )}
       {!isLoading && !error && posts?.length === 0 && (
         <p className="text-center my-4">No posts in this tab. Switch 👻</p>

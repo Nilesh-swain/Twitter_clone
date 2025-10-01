@@ -1,9 +1,12 @@
+
 import { CiImageOn } from "react-icons/ci";
 import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
 import { postAPI } from "../../utils/api.js";
 import { useAuth } from "../../contexts/AuthContext.jsx";
+import { useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 const CreatePost = () => {
   const [text, setText] = useState("");
@@ -11,8 +14,8 @@ const CreatePost = () => {
   const [isPending, setIsPending] = useState(false);
   const [isError, setIsError] = useState(false);
   const { user } = useAuth();
-
   const imgRef = useRef(null);
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,17 +25,21 @@ const CreatePost = () => {
     setIsError(false);
 
     try {
+      // Create the post
       await postAPI.createPost({ text, img });
+
+      // Reset form
       setText("");
       setImg(null);
-      if (imgRef.current) {
-        imgRef.current.value = null;
-      }
-      // Refresh posts by triggering a re-render
-      window.location.reload();
+      if (imgRef.current) imgRef.current.value = null;
+
+      // ✅ Refresh posts without reloading page
+      queryClient.invalidateQueries(["posts"]);
+      toast.success("Post created!");
     } catch (error) {
       console.error("Error creating post:", error);
       setIsError(true);
+      toast.error("Failed to create post!");
     } finally {
       setIsPending(false);
     }
@@ -42,16 +49,12 @@ const CreatePost = () => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => {
-        setImg(reader.result);
-      };
+      reader.onload = () => setImg(reader.result);
       reader.readAsDataURL(file);
     }
   };
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
     <div className="border-b border-gray-800 p-4">
@@ -142,4 +145,77 @@ const CreatePost = () => {
     </div>
   );
 };
+
 export default CreatePost;
+
+
+
+
+
+//------------------- Explanation of Changes(refesh only a section instade of enter website.) ------------------//
+
+
+// 1️⃣ Removed full page reload
+
+// Old:
+
+// window.location.reload();
+
+
+// This reloads the entire page.
+
+// React loses all its state.
+
+// Slow and unnecessary.
+
+// New:
+
+// queryClient.invalidateQueries(["posts"]);
+
+
+// Only re-fetches the posts data from the server.
+
+// React automatically updates the posts component.
+
+// Faster and cleaner.
+
+// 2️⃣ Used React Query’s queryClient
+
+// Imported useQueryClient from @tanstack/react-query.
+
+// Called queryClient.invalidateQueries(["posts"]) after successfully creating a post.
+
+// This tells React Query: “Hey, the posts data changed. Please refetch it.”
+
+// 3️⃣ Kept form state intact
+
+// Reset text and img after post creation:
+
+// setText("");
+// setImg(null);
+
+
+// Reset the file input reference (imgRef.current.value = null).
+
+// 4️⃣ Added toast notifications
+
+// Show success/error messages without page reload:
+
+// toast.success("Post created!");
+// toast.error("Failed to create post!");
+
+// 5️⃣ Everything else remains the same
+
+// Image preview, emoji button, textarea input, and submit button logic stayed unchanged.
+
+// Only the way posts refresh after creating a post was improved.
+
+// ✅ Result:
+
+// Page no longer reloads entirely.
+
+// Only the posts component updates.
+
+// User experience is smooth and faster.
+
+// State of other components remains intact.

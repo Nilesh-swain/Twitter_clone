@@ -39,15 +39,37 @@ export const createpost = async (req, res) => {
 
 export const deletePost = async (req, res) => {
   try {
+    console.log("Delete request received", {
+      postId: req.params.id,
+      requestUser: req.user ? req.user._id : null,
+    });
     const post = await Post.findById(req.params.id);
     if (!post) {
-      return res.status(404).json({ message: "Post not found" });
+      console.warn(`Delete failed: Post not found (id: ${req.params.id})`);
+      return res
+        .status(404)
+        .json({ error: "Post not found", id: req.params.id });
     }
 
+    if (!req.user || !req.user._id) {
+      console.warn("Delete failed: No user in request");
+      return res.status(401).json({ error: "Unauthorized: No user info" });
+    }
+
+    console.log("Post found", {
+      postUser: post.user.toString(),
+      requestUser: req.user._id.toString(),
+    });
+
     if (post.user.toString() !== req.user._id.toString()) {
-      return res
-        .status(403)
-        .json({ message: "You are not authorized to delete this post" });
+      console.warn(
+        `Delete failed: Unauthorized user (post user: ${post.user}, req user: ${req.user._id})`
+      );
+      return res.status(403).json({
+        error: "You are not authorized to delete this post",
+        postUser: post.user,
+        reqUser: req.user._id,
+      });
     }
 
     if (post.img) {
@@ -57,10 +79,15 @@ export const deletePost = async (req, res) => {
 
     await Post.findByIdAndDelete(req.params.id);
 
-    return res.status(200).json({ message: "Post deleted successfully" });
+    console.log("Post deleted", { postId: req.params.id });
+    return res
+      .status(200)
+      .json({ message: "Post deleted successfully", id: req.params.id });
   } catch (error) {
     console.error("Error in deletePost:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 };
 

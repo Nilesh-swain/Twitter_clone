@@ -50,7 +50,7 @@ npm install
 3. Create a `.env` file in the Backend directory with the following variables:
 
 ```env
-MONGO_URL=mongodb://localhost:27017/twitter-clone
+MONGO_URL=mongodb+srv://nileshswain715_db_user:31RD8z0dlilL2fQ5@cluster0.fbmjzwa.mongodb.net/twitter-clone?retryWrites=true&w=majority
 JWT_SECRET=your_jwt_secret_key_here
 PORT=9000
 NODE_ENV=development

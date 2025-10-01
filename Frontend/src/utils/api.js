@@ -129,7 +129,7 @@ export const notificationAPI = {
   },
 
   deleteAllNotifications: async () => {
-    return apiRequest("/notification/delect", {
+    return apiRequest("/notification/delete", {
       method: "DELETE",
     });
   },
