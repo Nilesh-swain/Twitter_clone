@@ -1,8 +1,18 @@
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 import toast from "react-hot-toast";
-// import { useQuery } from "@tanstack/react-query";
+import { FaArrowLeft, FaLink } from "react-icons/fa";
+import { MdEdit } from "react-icons/md";
+import { IoCalendarOutline } from "react-icons/io5";
+
+import Post from "../../components/common/Post";
+import PostSkeleton from "../../components/skeletons/PostSkeleton";
+import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
+import EditProfileModal from "./EditProfileModal";
+import { useAuth } from "../../contexts/AuthContext";
+import { userAPI, postAPI } from "../../utils/api";
 
 const ProfilePage = () => {
   const [coverImg, setCoverImg] = useState(null);
@@ -12,27 +22,22 @@ const ProfilePage = () => {
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
 
-  const isLoading = false;
-  const isMyProfile = true;
+  const { username } = useParams();
+  const { user: currentUser } = useAuth();
 
-  const user = {
-    _id: "1",
-    fullName: "John Doe",
-    username: "johndoe",
-    profileImg: "/avatars/boy2.png",
-    coverImg: "/cover.png",
-    bio: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    link: "https://youtube.com/@asaprogrammer_",
-    following: ["1", "2", "3"],
-    followers: ["1", "2", "3"],
-  };
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["userProfile", username],
+    queryFn: () => userAPI.getProfile(username),
+    enabled: !!username,
+  });
 
-  // Placeholder posts array
-  const POSTS = [
-    { id: 1, content: "Hello world!" },
-    { id: 2, content: "My second post." },
-    { id: 3, content: "Another update." },
-  ];
+  const { data: posts, isLoading: postsLoading } = useQuery({
+    queryKey: ["userPosts", username, feedType],
+    queryFn: () => feedType === "posts" ? postAPI.getUserPosts(username) : postAPI.getLikedPosts(user?._id),
+    enabled: !!username && !!user,
+  });
+
+  const isMyProfile = user?._id === currentUser?._id;
 
   const handleImgChange = (e, state) => {
     const file = e.target.files[0];
@@ -64,7 +69,7 @@ const ProfilePage = () => {
                 <div className="flex flex-col">
                   <p className="font-bold text-lg">{user?.fullName}</p>
                   <span className="text-sm text-slate-500">
-                    {POSTS.length} posts
+                    {posts ? posts.length : 0} posts
                   </span>
                 </div>
               </div>
@@ -211,7 +216,25 @@ const ProfilePage = () => {
             </>
           )}
 
-          <Posts />
+          {postsLoading && (
+            <div className="flex flex-col justify-center">
+              <PostSkeleton />
+              <PostSkeleton />
+              <PostSkeleton />
+            </div>
+          )}
+          {!postsLoading && posts?.length === 0 && (
+            <p className="text-center my-4">No posts in this tab. Switch 👻</p>
+          )}
+          {!postsLoading && posts && (
+            <div className="space-y-4">
+              {posts.map((post) => (
+                <div key={post._id} className="mx-2">
+                  <Post post={post} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </>

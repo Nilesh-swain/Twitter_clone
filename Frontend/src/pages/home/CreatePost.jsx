@@ -1,4 +1,3 @@
-
 import { CiImageOn } from "react-icons/ci";
 import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
@@ -7,10 +6,12 @@ import { postAPI } from "../../utils/api.js";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { uploadImageToCloudinary } from "../../utils/cloudinaryUpload.js";
 
 const CreatePost = () => {
   const [text, setText] = useState("");
   const [img, setImg] = useState(null);
+  const [imgFile, setImgFile] = useState(null);
   const [isPending, setIsPending] = useState(false);
   const [isError, setIsError] = useState(false);
   const { user } = useAuth();
@@ -25,15 +26,21 @@ const CreatePost = () => {
     setIsError(false);
 
     try {
-      // Create the post
-      await postAPI.createPost({ text, img });
+      let imageUrl = null;
+      if (imgFile) {
+        imageUrl = await uploadImageToCloudinary(imgFile);
+      }
+
+      // Create the post with text and image URL
+      await postAPI.createPost({ text, imgFile: null, imgUrl: imageUrl });
 
       // Reset form
       setText("");
       setImg(null);
+      setImgFile(null);
       if (imgRef.current) imgRef.current.value = null;
 
-      // ✅ Refresh posts without reloading page
+      // Refresh posts without reloading page
       queryClient.invalidateQueries(["posts"]);
       toast.success("Post created!");
     } catch (error) {
@@ -48,6 +55,7 @@ const CreatePost = () => {
   const handleImgChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setImgFile(file);
       const reader = new FileReader();
       reader.onload = () => setImg(reader.result);
       reader.readAsDataURL(file);
@@ -57,9 +65,9 @@ const CreatePost = () => {
   if (!user) return null;
 
   return (
-    <div className="border-b border-gray-800 p-4">
-      <div className="flex gap-3">
-        <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+    <div className="bg-gray-900/80 border border-gray-700 rounded-2xl p-6 mb-6 mx-2 shadow-lg">
+      <div className="flex gap-5">
+        <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-primary">
           <img
             src={user.profileImg || "/avatar-placeholder.png"}
             alt={user.fullname}
@@ -68,46 +76,54 @@ const CreatePost = () => {
         </div>
         <form className="flex-1" onSubmit={handleSubmit}>
           <textarea
-            className="w-full bg-transparent text-xl placeholder-gray-500 resize-none focus:outline-none min-h-[120px]"
+            className="w-full bg-transparent text-2xl placeholder-gray-400 resize-none focus:outline-none min-h-[160px] leading-relaxed font-sans rounded-xl p-4 border border-gray-700 focus:border-primary transition-colors shadow-inner"
             placeholder="What's happening?"
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
 
           {img && (
-            <div className="relative mt-4 rounded-2xl overflow-hidden">
+            <div className="relative mt-6 rounded-3xl overflow-hidden shadow-lg border border-gray-700">
               <button
                 type="button"
-                className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
-                onClick={() => {
+                className="absolute top-3 right-3 bg-black/80 hover:bg-black/95 text-white rounded-full p-2 transition-colors z-10 shadow-md"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setImg(null);
-                  imgRef.current.value = null;
+                  setImgFile(null);
+                  if (imgRef.current) {
+                    imgRef.current.value = null;
+                  }
                 }}
+                title="Remove image"
               >
-                <IoCloseSharp className="w-4 h-4" />
+                <IoCloseSharp className="w-5 h-5" />
               </button>
               <img
                 src={img}
                 alt="Post image"
-                className="w-full max-h-96 object-cover"
+                className="w-full max-h-96 object-cover rounded-3xl"
               />
             </div>
           )}
 
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-800">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-700">
+            <div className="flex items-center gap-5">
               <button
                 type="button"
-                className="p-2 rounded-full hover:bg-gray-800 transition-colors"
+                className="p-3 rounded-full hover:bg-gray-800 transition-colors shadow-md text-primary"
                 onClick={() => imgRef.current.click()}
+                aria-label="Add image"
               >
-                <CiImageOn className="w-5 h-5 text-primary" />
+                <CiImageOn className="w-6 h-6" />
               </button>
               <button
                 type="button"
-                className="p-2 rounded-full hover:bg-gray-800 transition-colors"
+                className="p-3 rounded-full hover:bg-gray-800 transition-colors shadow-md text-primary"
+                aria-label="Add emoji"
               >
-                <BsEmojiSmileFill className="w-5 h-5 text-primary" />
+                <BsEmojiSmileFill className="w-6 h-6" />
               </button>
             </div>
 
@@ -121,12 +137,12 @@ const CreatePost = () => {
 
             <button
               type="submit"
-              className="twitter-button px-6 py-2 text-sm font-semibold"
+              className="twitter-button bg-primary hover:bg-primary-dark px-8 py-3 text-base font-semibold rounded-full shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isPending || (!text.trim() && !img)}
             >
               {isPending ? (
-                <div className="flex items-center gap-2">
-                  <div className="loading-spinner w-4 h-4"></div>
+                <div className="flex items-center gap-3 justify-center">
+                  <div className="loading-spinner w-5 h-5"></div>
                   Posting...
                 </div>
               ) : (
@@ -136,7 +152,7 @@ const CreatePost = () => {
           </div>
 
           {isError && (
-            <div className="mt-2 text-red-500 text-sm">
+            <div className="mt-3 text-red-500 text-sm font-medium">
               Something went wrong. Please try again.
             </div>
           )}
@@ -147,75 +163,3 @@ const CreatePost = () => {
 };
 
 export default CreatePost;
-
-
-
-
-
-//------------------- Explanation of Changes(refesh only a section instade of enter website.) ------------------//
-
-
-// 1️⃣ Removed full page reload
-
-// Old:
-
-// window.location.reload();
-
-
-// This reloads the entire page.
-
-// React loses all its state.
-
-// Slow and unnecessary.
-
-// New:
-
-// queryClient.invalidateQueries(["posts"]);
-
-
-// Only re-fetches the posts data from the server.
-
-// React automatically updates the posts component.
-
-// Faster and cleaner.
-
-// 2️⃣ Used React Query’s queryClient
-
-// Imported useQueryClient from @tanstack/react-query.
-
-// Called queryClient.invalidateQueries(["posts"]) after successfully creating a post.
-
-// This tells React Query: “Hey, the posts data changed. Please refetch it.”
-
-// 3️⃣ Kept form state intact
-
-// Reset text and img after post creation:
-
-// setText("");
-// setImg(null);
-
-
-// Reset the file input reference (imgRef.current.value = null).
-
-// 4️⃣ Added toast notifications
-
-// Show success/error messages without page reload:
-
-// toast.success("Post created!");
-// toast.error("Failed to create post!");
-
-// 5️⃣ Everything else remains the same
-
-// Image preview, emoji button, textarea input, and submit button logic stayed unchanged.
-
-// Only the way posts refresh after creating a post was improved.
-
-// ✅ Result:
-
-// Page no longer reloads entirely.
-
-// Only the posts component updates.
-
-// User experience is smooth and faster.
-
-// State of other components remains intact.

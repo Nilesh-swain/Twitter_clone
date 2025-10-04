@@ -6,7 +6,7 @@ const RightPanel = () => {
   const isLoading = false;
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="h-screen overflow-y-auto p-4 space-y-6">
       {/* Search Bar */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

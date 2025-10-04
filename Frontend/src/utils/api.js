@@ -4,7 +4,7 @@ const API_BASE_URL = "http://localhost:9000/api";
 const apiRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
   const config = {
-    headers: {
+    headers: options.body instanceof FormData ? {} : {
       "Content-Type": "application/json",
     },
     credentials: "include", // Include cookies for authentication
@@ -13,10 +13,18 @@ const apiRequest = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(url, config);
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (jsonError) {
+      // If response is not JSON, fallback to text
+      const text = await response.text();
+      data = { error: text || response.statusText };
+    }
 
     if (!response.ok) {
-      throw new Error(data.error || "Something went wrong");
+      const errorMessage = data.error || data.message || response.statusText || "Something went wrong";
+      throw new Error(`API Error ${response.status}: ${errorMessage}`);
     }
 
     return data;
@@ -96,9 +104,16 @@ export const postAPI = {
   },
 
   createPost: async (postData) => {
+    const body = {};
+    if (postData.text && postData.text.trim() !== '') {
+      body.text = postData.text;
+    }
+    if (postData.imgUrl && postData.imgUrl.trim() !== '') {
+      body.imgUrl = postData.imgUrl;
+    }
     return apiRequest("/post/create", {
       method: "POST",
-      body: JSON.stringify(postData),
+      body: JSON.stringify(body),
     });
   },
 
@@ -134,4 +149,3 @@ export const notificationAPI = {
     });
   },
 };
-

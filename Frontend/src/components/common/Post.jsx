@@ -312,10 +312,10 @@ const Post = ({ post }) => {
   };
 
   return (
-    <article className="twitter-post p-4 hover:bg-gray-900/50 transition-colors">
-      <div className="flex gap-3">
+    <article className="twitter-post p-6 hover:bg-gray-900/40 transition-all duration-300 rounded-2xl border border-gray-700/60 shadow-md hover:shadow-lg">
+      <div className="flex gap-5">
         {/* Profile image */}
-        <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+        <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-primary/70 shadow-sm">
           <Link to={`/profile/${postOwner?.username}`}>
             <img
               src={postOwner?.profileImg || "/avatar-placeholder.png"}
@@ -328,84 +328,84 @@ const Post = ({ post }) => {
         {/* Post content */}
         <div className="flex-1 min-w-0">
           {/* Header */}
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-3 mb-3">
             <Link
               to={`/profile/${postOwner?.username}`}
-              className="font-semibold hover:underline"
+              className="font-bold text-white hover:underline transition-colors text-lg"
             >
               {postOwner?.fullname}
             </Link>
             <span className="text-gray-500">·</span>
             <Link
               to={`/profile/${postOwner?.username}`}
-              className="text-gray-500 hover:underline"
+              className="text-gray-400 hover:text-gray-300 hover:underline transition-colors"
             >
               @{postOwner?.username}
             </Link>
             <span className="text-gray-500">·</span>
-            <span className="text-gray-500">{formattedDate}</span>
+            <span className="text-gray-400 text-sm">{formattedDate}</span>
 
             {isMyPost && (
               <button
                 onClick={handleDeletePost}
-                className="ml-auto p-1 rounded-full hover:bg-red-500/20 text-gray-500 hover:text-red-500 transition-colors"
+                className="ml-auto p-2 rounded-full hover:bg-red-500/25 text-gray-400 hover:text-red-400 transition-all duration-300 shadow-sm hover:shadow-md"
                 title="Delete post"
                 disabled={isDeleting}
               >
                 {isDeleting ? (
                   <LoadingSpinner />
                 ) : (
-                  <FaTrash className="w-4 h-4" />
+                  <FaTrash className="w-5 h-5" />
                 )}
               </button>
             )}
           </div>
 
           {/* Text & image */}
-          <div className="mb-3">
-            <p className="text-white whitespace-pre-wrap break-words">
+          <div className="mb-6">
+            <p className="text-white whitespace-pre-wrap break-words leading-relaxed text-lg font-sans">
               {post.text}
             </p>
             {post.img && (
-              <div className="mt-3 rounded-2xl overflow-hidden">
+              <div className="mt-5 rounded-3xl overflow-hidden border border-gray-700/60 shadow-sm hover:shadow-md transition-shadow duration-300">
                 <img
                   src={post.img}
                   alt="Post content"
-                  className="w-full max-h-96 object-cover"
+                  className="w-full max-h-96 object-cover hover:scale-105 transition-transform duration-300 rounded-3xl"
                 />
               </div>
             )}
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between max-w-md">
+          <div className="flex items-center justify-between max-w-lg pt-3 border-t border-gray-800/60">
             <button
-              className="flex items-center gap-2 p-2 rounded-full hover:bg-blue-500/20 text-gray-500 hover:text-blue-500 transition-colors"
+              className="flex items-center gap-4 p-3 rounded-full hover:bg-blue-500/15 text-gray-400 hover:text-blue-400 transition-all duration-300 group shadow-sm hover:shadow-md"
               onClick={() =>
                 document.getElementById("comments_modal" + post._id).showModal()
               }
             >
-              <FaRegComment className="w-4 h-4" />
-              <span className="text-sm">{post.comments?.length || 0}</span>
+              <FaRegComment className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-semibold">{post.comments?.length || 0}</span>
             </button>
 
-            <button className="flex items-center gap-2 p-2 rounded-full hover:bg-green-500/20 text-gray-500 hover:text-green-500 transition-colors">
-              <BiRepost className="w-5 h-5" />
-              <span className="text-sm">0</span>
+            <button className="flex items-center gap-4 p-3 rounded-full hover:bg-green-500/15 text-gray-400 hover:text-green-400 transition-all duration-300 group shadow-sm hover:shadow-md">
+              <BiRepost className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-semibold">0</span>
             </button>
 
             <button
-              className="flex items-center gap-2 p-2 rounded-full hover:bg-red-500/20 text-gray-500 hover:text-red-500 transition-colors"
+              className="flex items-center gap-4 p-3 rounded-full hover:bg-red-500/15 text-gray-400 hover:text-red-400 transition-all duration-300 group shadow-sm hover:shadow-md"
               onClick={handleLikePost}
             >
-              <FaRegHeart className="w-4 h-4" />
-              <span className={`text-sm ${isLiked ? "text-red-500" : ""}`}>
+              <FaRegHeart className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              <span className={`text-sm font-semibold ${isLiked ? "text-red-400" : ""}`}>
                 {post.likes?.length || 0}
               </span>
             </button>
 
-            <button className="flex items-center gap-2 p-2 rounded-full hover:bg-blue-500/20 text-gray-500 hover:text-blue-500 transition-colors">
-              <FaRegBookmark className="w-4 h-4" />
+            <button className="flex items-center gap-4 p-3 rounded-full hover:bg-blue-500/15 text-gray-400 hover:text-blue-400 transition-all duration-300 group shadow-sm hover:shadow-md">
+              <FaRegBookmark className="w-6 h-6 group-hover:scale-110 transition-transform" />
             </button>
           </div>
         </div>

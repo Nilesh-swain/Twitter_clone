@@ -8,6 +8,7 @@ import authRouter from "./router/auth.router.js";
 import userRouter from "./router/user.router.js";
 import postRouter from "./router/post.router.js";
 import notificationRouter from "./router/notification.router.js";
+import uploadRouter from "./router/upload.router.js";
 
 import connectMangoDB from "./DB/connectmangodb.js";
 
@@ -16,12 +17,17 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // it is used to the upload images to the cloudinary.
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
+if (process.env.CLOUDINARY_URL) {
+  // Cloudinary will automatically parse CLOUDINARY_URL
+  cloudinary.config({ secure: true });
+} else {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true,
+  });
+}
 
 const app = express();
 const port = process.env.PORT || 9000;
@@ -42,6 +48,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRouter); // Mount the auth router.
 app.use("/api/user", userRouter); // Mount the user router.
 app.use("/api/post", postRouter); // Mount the post router.
+app.use("/api/upload", uploadRouter); // Mount the upload router.
 
 app.use("/api/notification", notificationRouter);
 

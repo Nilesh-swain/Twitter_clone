@@ -5,35 +5,32 @@ import { v2 as cloudinary } from "cloudinary";
 
 export const createpost = async (req, res) => {
   try {
-    const { text, img } = req.body;
+    const { text, imgUrl } = req.body;
     const userId = req.user._id.toString();
+
+    console.log("createpost called with:", { text: text ? "present" : "empty", imgUrl: imgUrl ? "present" : "absent", userId });
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ error: "User not found" });
     }
 
-    if (!img && !text) {
-      return res.status(400).json({ message: "Post cannot be empty" });
-    }
-
-    let imageUrl = null;
-    if (img) {
-      const uploadResponse = await cloudinary.uploader.upload(img);
-      imageUrl = uploadResponse.secure_url;
+    if (!imgUrl && !text) {
+      return res.status(400).json({ error: "Post cannot be empty" });
     }
 
     const newPost = new Post({
       user: userId,
       text,
-      img: imageUrl,
+      img: imgUrl,
     });
 
     await newPost.save();
+    console.log("Post created successfully:", newPost._id);
     return res.status(201).json(newPost);
   } catch (error) {
     console.error("Error in createpost:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ error: "Internal Server Error", details: error.message });
   }
 };
 
@@ -72,14 +69,24 @@ export const deletePost = async (req, res) => {
       });
     }
 
+    // Delete associated image from Cloudinary if it exists
     if (post.img) {
-      const imgPublicId = post.img.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(imgPublicId);
+      try {
+        const imgPublicId = post.img.split("/").pop().split(".")[0];
+        console.log("Attempting to delete image from Cloudinary:", imgPublicId);
+        const cloudinaryResult = await cloudinary.uploader.destroy(imgPublicId);
+        console.log("Cloudinary delete result:", cloudinaryResult);
+      } catch (cloudinaryError) {
+        console.error("Error deleting image from Cloudinary:", cloudinaryError);
+        // Continue with post deletion even if image deletion fails
+        // This prevents orphaned posts when Cloudinary operations fail
+      }
     }
 
+    // Delete the post from database
     await Post.findByIdAndDelete(req.params.id);
 
-    console.log("Post deleted", { postId: req.params.id });
+    console.log("Post deleted successfully", { postId: req.params.id });
     return res
       .status(200)
       .json({ message: "Post deleted successfully", id: req.params.id });
