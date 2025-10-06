@@ -16,7 +16,7 @@ const apiRequest = async (endpoint, options = {}) => {
     let data;
     try {
       data = await response.json();
-    } catch (jsonError) {
+    } catch {
       // If response is not JSON, fallback to text
       const text = await response.text();
       data = { error: text || response.statusText };
@@ -82,6 +82,10 @@ export const userAPI = {
       method: "POST",
       body: JSON.stringify(userData),
     });
+  },
+
+  searchUsers: async (query) => {
+    return apiRequest(`/user/search?query=${encodeURIComponent(query)}`);
   },
 };
 

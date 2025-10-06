@@ -297,3 +297,33 @@ export const UpdateUser = async (req, res) => {
       .json({ error: "Something went wrong in UpdateUser." });
   }
 };
+
+// ==========================
+// SEARCH USERS
+// ==========================
+export const SearchUsers = async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({ error: "Search query is required" });
+    }
+
+    // Search for users by username or full name (case-insensitive)
+    const users = await User.find({
+      $or: [
+        { username: { $regex: query, $options: "i" } },
+        { fullname: { $regex: query, $options: "i" } }
+      ]
+    })
+    .select("-password") // Exclude password field
+    .limit(10); // Limit results to 10 users
+
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error("Error in SearchUsers:", error);
+    return res
+      .status(500)
+      .json({ error: "Something went wrong in SearchUsers." });
+  }
+};

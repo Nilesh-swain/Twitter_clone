@@ -60,6 +60,65 @@ export const SignUp = async (req, res) => {
 };
 
 // =========================
+// CREATE ADMIN
+// =========================
+export const CreateAdmin = async (req, res) => {
+  try {
+    const { fullname, username, email, password } = req.body;
+
+    if (!fullname || !username || !email || !password) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    // Check if username or email already exists
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ error: "Username or email already exists" });
+    }
+
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        error:
+          "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.",
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newAdmin = new User({
+      fullname,
+      username,
+      email,
+      password: hashedPassword,
+      role: "admin",
+    });
+
+    await newAdmin.save();
+
+    return res.status(201).json({
+      _id: newAdmin._id,
+      fullname: newAdmin.fullname,
+      username: newAdmin.username,
+      email: newAdmin.email,
+      role: newAdmin.role,
+    });
+  } catch (error) {
+    console.error("Error in CreateAdmin:", error.message);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+// =========================
 // LOGIN
 // =========================
 export const Login = async (req, res) => {
@@ -139,7 +198,6 @@ export const GetMe = async (req, res) => {
   }
 };
 
-
 // =========================
 // PASSWORD RESET (OTP)
 // =========================
@@ -170,7 +228,7 @@ export const requestPasswordReset = async (req, res) => {
         const transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
           port: process.env.SMTP_PORT || 587,
-          secure: process.env.SMTP_SECURE === 'true',
+          secure: process.env.SMTP_SECURE === "true",
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
@@ -191,7 +249,12 @@ export const requestPasswordReset = async (req, res) => {
     }
 
     // Try to send via Twilio SMS if configured and mobile available
-    if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN && user.phone && (via === "sms")) {
+    if (
+      process.env.TWILIO_SID &&
+      process.env.TWILIO_TOKEN &&
+      user.phone &&
+      via === "sms"
+    ) {
       try {
         const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
         await client.messages.create({
@@ -206,7 +269,9 @@ export const requestPasswordReset = async (req, res) => {
     }
 
     // Fallback: return OTP in response for development (INSECURE)
-    return res.status(200).json({ message: "OTP generated (development)", otp });
+    return res
+      .status(200)
+      .json({ message: "OTP generated (development)", otp });
   } catch (error) {
     console.error("requestPasswordReset error:", error);
     res.status(500).json({ error: "Something went wrong" });
@@ -216,13 +281,16 @@ export const requestPasswordReset = async (req, res) => {
 export const verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
-    if (!email || !otp) return res.status(400).json({ error: "Email and OTP are required" });
+    if (!email || !otp)
+      return res.status(400).json({ error: "Email and OTP are required" });
 
     const user = await User.findOne({ email });
-    if (!user || !user.otp) return res.status(400).json({ error: "Invalid request" });
+    if (!user || !user.otp)
+      return res.status(400).json({ error: "Invalid request" });
 
     if (user.otp !== otp) return res.status(400).json({ error: "Invalid OTP" });
-    if (user.otpExpires < new Date()) return res.status(400).json({ error: "OTP expired" });
+    if (user.otpExpires < new Date())
+      return res.status(400).json({ error: "OTP expired" });
 
     // mark verified by clearing otp but set a short-lived token field (optional)
     user.otp = null;
@@ -242,7 +310,8 @@ export const verifyOTP = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { email, newPassword /*, resetToken */ } = req.body;
-    if (!email || !newPassword) return res.status(400).json({ error: "Email and newPassword required" });
+    if (!email || !newPassword)
+      return res.status(400).json({ error: "Email and newPassword required" });
 
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
