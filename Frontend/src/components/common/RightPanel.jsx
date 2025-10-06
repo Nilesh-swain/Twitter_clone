@@ -170,7 +170,10 @@ const RightPanel = () => {
                 key={user._id}
                 className="flex items-center justify-between hover:bg-gray-800 p-3 rounded-lg transition-colors"
               >
-                <div className="flex items-center gap-3">
+                <Link
+                  to={`/profile/${user.username}`}
+                  className="flex items-center gap-3 flex-1"
+                >
                   <div className="w-10 h-10 rounded-full overflow-hidden">
                     <img
                       src={user.profileImg || "/avatar-placeholder.png"}
@@ -184,7 +187,7 @@ const RightPanel = () => {
                     </p>
                     <p className="text-gray-500 text-sm">@{user.username}</p>
                   </div>
-                </div>
+                </Link>
                 <button
                   className="twitter-button px-4 py-1.5 text-sm font-semibold"
                   onClick={() => followUnfollow(user._id)}

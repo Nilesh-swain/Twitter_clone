@@ -133,10 +133,14 @@ export const postAPI = {
     });
   },
 
-  commentOnPost: async (postId, comment) => {
+  commentOnPost: async (postId, comment, parentCommentId = null) => {
+    const body = { text: comment };
+    if (parentCommentId) {
+      body.parentCommentId = parentCommentId;
+    }
     return apiRequest(`/post/comment/${postId}`, {
       method: "POST",
-      body: JSON.stringify({ text: comment }),
+      body: JSON.stringify(body),
     });
   },
 };
@@ -148,7 +152,13 @@ export const notificationAPI = {
   },
 
   deleteAllNotifications: async () => {
-    return apiRequest("/notification/delete", {
+    return apiRequest("/notification/delect", {
+      method: "DELETE",
+    });
+  },
+
+  deleteSingleNotification: async (notificationId) => {
+    return apiRequest(`/notification/delete/${notificationId}`, {
       method: "DELETE",
     });
   },

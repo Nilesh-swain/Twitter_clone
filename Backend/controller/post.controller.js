@@ -100,7 +100,7 @@ export const deletePost = async (req, res) => {
 
 export const CommentOnPost = async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, parentCommentId } = req.body;
     const postId = req.params.id;
     const userId = req.user._id;
 
@@ -114,6 +114,9 @@ export const CommentOnPost = async (req, res) => {
     }
 
     const comment = { user: userId, text };
+    if (parentCommentId) {
+      comment.parentComment = parentCommentId;
+    }
     postDoc.comments.push(comment);
     await postDoc.save();
 
@@ -137,7 +140,8 @@ export const likeUnlikePost = async (req, res) => {
 
     const userLikedPost = post.likes.includes(userId);
     if (userLikedPost) {
-      await post.updateOne({ _id: postId }, { $pull: { likes: userId } });
+      post.likes = post.likes.filter(id => !id.equals(userId));
+      await post.save();
       await User.updateOne({ _id: userId }, { $pull: { likes: postId } });
       res.status(200).json({ message: "Post unliked successfully" });
     } else {

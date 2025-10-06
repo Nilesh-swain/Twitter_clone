@@ -47,14 +47,14 @@ function App() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto flex">
+      <div className="max-w-7xl mx-auto flex h-screen">
         {/* Sidebar */}
         <div className="hidden md:block md:w-64 lg:w-72">
           <Sidebar />
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 max-w-2xl">
+        <div className="flex-1 max-w-2xl h-full overflow-y-auto">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/notification" element={<Notification />} />

@@ -58,7 +58,7 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen bg-[#0f0f10] text-white">
+    <div className="flex flex-col h-screen border-r border-gray-700 bg-[#0f0f10] text-white">
       {/* HEADER */}
       {isLoading && <ProfileHeaderSkeleton />}
       {!isLoading && !user && (
@@ -82,8 +82,9 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {/* COVER IMAGE */}
-          <div className="relative group/cover">
+          <div className="flex-1 overflow-y-auto">
+            {/* COVER IMAGE */}
+            <div className="relative group/cover">
             <img
               src={coverImg || user?.coverImg || "/cover.png"}
               alt="cover"
@@ -246,6 +247,7 @@ const ProfilePage = () => {
               ))}
             </div>
           )}
+          </div>
         </div>
       )}
     </div>

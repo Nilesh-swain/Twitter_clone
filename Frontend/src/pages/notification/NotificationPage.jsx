@@ -3,38 +3,51 @@ import toast from "react-hot-toast";
 import { IoSettingsOutline } from "react-icons/io5";
 import { FaUser, FaHeart } from "react-icons/fa";
 import LoadingSpinner from "../../components/common/LoadingSpinner"; // ✅ adjust path if needed
+import { useState, useEffect } from "react";
+import { notificationAPI } from "../../utils/api";
 
 const NotificationPage = () => {
-  const isLoading = false;
+  const [isLoading, setIsLoading] = useState(false);
+  const [notifications, setNotifications] = useState([]);
 
-  const notifications = [
-    {
-      _id: "1",
-      from: {
-        _id: "1",
-        username: "johndoe",
-        profileImg: "/avatars/boy2.png",
-      },
-      type: "follow",
-    },
-    {
-      _id: "2",
-      from: {
-        _id: "2",
-        username: "janedoe",
-        profileImg: "/avatars/girl1.png",
-      },
-      type: "like",
-    },
-  ];
+  const fetchNotifications = async () => {
+    setIsLoading(true);
+    try {
+      const data = await notificationAPI.getNotifications();
+      setNotifications(data);
+    } catch {
+      toast.error("Failed to load notifications");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const deleteNotifications = () => {
-    toast.success("✅ All notifications deleted");
-    // Later: Call backend API to clear notifications
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const deleteNotifications = async () => {
+    try {
+      await notificationAPI.deleteAllNotifications();
+      setNotifications([]);
+      toast.success("All notifications deleted");
+    } catch {
+      toast.error("Failed to delete notifications");
+    }
+  };
+
+  const deleteSingleNotification = async (id) => {
+    try {
+      await notificationAPI.deleteSingleNotification(id);
+      setNotifications((prev) => prev.filter((n) => n._id !== id));
+      toast.success("Notification deleted");
+    } catch {
+      toast.error("Failed to delete notification");
+    }
   };
 
   return (
-    <div className="flex-[4_4_0] border-l border-r border-gray-700 min-h-screen">
+    <div className="flex flex-col h-screen border-l border-r border-gray-700">
       {/* Header */}
       <div className="flex justify-between items-center p-4 border-b border-gray-700 sticky top-0 bg-black z-10">
         <p className="font-bold text-lg">Notifications</p>
@@ -53,7 +66,8 @@ const NotificationPage = () => {
         </div>
       </div>
 
-      {/* Loading state */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Loading state */}
       {isLoading && (
         <div className="flex justify-center h-full items-center">
           <LoadingSpinner size="lg" />
@@ -104,8 +118,16 @@ const NotificationPage = () => {
                   : "liked your post"}
               </div>
             </Link>
+            <button
+              onClick={() => deleteSingleNotification(notification._id)}
+              className="btn btn-sm btn-error ml-2"
+              title="Delete notification"
+            >
+              🗑
+            </button>
           </div>
         ))}
+      </div>
     </div>
   );
 };

@@ -4,7 +4,7 @@ import protectRoute from "../middleware/protectRoute.js"; // ✅ keep only this 
 import {
   getNotification,
   delectNotification,
-  // delectOneNotification,
+  delectOneNotification,
 } from "../controller/notification.controller.js";
 
 const router = express.Router();
@@ -12,6 +12,6 @@ const router = express.Router();
 // Routes
 router.get("/", protectRoute, getNotification);
 router.delete("/delect", protectRoute, delectNotification);
-// router.delete("/delete/:id", protectRoute, delectOneNotification);
+router.delete("/delete/:id", protectRoute, delectOneNotification);
 
 export default router;
