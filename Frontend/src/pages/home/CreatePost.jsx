@@ -7,6 +7,7 @@ import { useAuth } from "../../contexts/AuthContext.jsx";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { uploadImageToCloudinary } from "../../utils/cloudinaryUpload.js";
+import EmojiPicker from 'emoji-picker-react';
 
 const CreatePost = () => {
   const [text, setText] = useState("");
@@ -14,6 +15,7 @@ const CreatePost = () => {
   const [imgFile, setImgFile] = useState(null);
   const [isPending, setIsPending] = useState(false);
   const [isError, setIsError] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const { user } = useAuth();
   const imgRef = useRef(null);
   const queryClient = useQueryClient();
@@ -108,7 +110,7 @@ const CreatePost = () => {
             </div>
           )}
 
-          <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-700">
+          <div className="relative flex items-center justify-between mt-6 pt-6 border-t border-gray-700">
             <div className="flex items-center gap-5">
               <button
                 type="button"
@@ -121,6 +123,7 @@ const CreatePost = () => {
               <button
                 type="button"
                 className="p-3 rounded-full hover:bg-gray-800 transition-colors shadow-md text-primary"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 aria-label="Add emoji"
               >
                 <BsEmojiSmileFill className="w-6 h-6" />
@@ -150,6 +153,18 @@ const CreatePost = () => {
               )}
             </button>
           </div>
+
+          {showEmojiPicker && (
+            <div className="absolute bottom-full right-0 z-10">
+              <EmojiPicker
+                onEmojiClick={(emojiObject) => {
+                  setText((prevText) => prevText + emojiObject.emoji);
+                  setShowEmojiPicker(false);
+                }}
+                theme="dark"
+              />
+            </div>
+          )}
 
           {isError && (
             <div className="mt-3 text-red-500 text-sm font-medium">

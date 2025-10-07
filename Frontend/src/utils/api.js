@@ -143,6 +143,26 @@ export const postAPI = {
       body: JSON.stringify(body),
     });
   },
+
+  repostPost: async (postId) => {
+    return apiRequest(`/post/repost/${postId}`, {
+      method: "POST",
+    });
+  },
+
+  bookmarkPost: async (postId) => {
+    return apiRequest(`/post/bookmark/${postId}`, {
+      method: "POST",
+    });
+  },
+
+  getBookmarkedPosts: async () => {
+    return apiRequest("/post/bookmarked");
+  },
+
+  getRepostedPosts: async (userId) => {
+    return apiRequest(`/post/reposted/${userId}`);
+  },
 };
 
 // Notification API functions
@@ -152,7 +172,7 @@ export const notificationAPI = {
   },
 
   deleteAllNotifications: async () => {
-    return apiRequest("/notification/delect", {
+    return apiRequest("/notification/delete", {
       method: "DELETE",
     });
   },

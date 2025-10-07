@@ -1,6 +1,8 @@
 import User from "../model/user.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
+import twilio from "twilio";
 
 // =========================
 // SIGN UP
@@ -43,16 +45,48 @@ export const SignUp = async (req, res) => {
       username,
       email,
       password: hashedPassword,
+      isVerified: false,
     });
 
     await newUser.save();
 
-    return res.status(201).json({
-      _id: newUser._id,
-      fullname: newUser.fullname,
-      username: newUser.username,
-      email: newUser.email,
-    });
+    // Generate OTP for email verification
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    newUser.otp = otp;
+    newUser.otpExpires = expires;
+    await newUser.save();
+
+    // Send OTP via email
+    if (process.env.SMTP_HOST) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT || 587,
+          secure: process.env.SMTP_SECURE === "true",
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
+
+        await transporter.sendMail({
+          from: process.env.SMTP_FROM || process.env.SMTP_USER,
+          to: newUser.email,
+          subject: "Verify your email - OTP",
+          text: `Your OTP for email verification is ${otp}. It expires in 15 minutes.`,
+        });
+      } catch (err) {
+        console.error("Error sending verification email:", err.message);
+        return res.status(500).json({ error: "Failed to send verification email" });
+      }
+    } else {
+      // For development, return OTP in response
+      return res.status(201).json({ message: "Account created. OTP sent (development)", otp });
+    }
+
+    return res.status(201).json({ message: "Account created. Please check your email for OTP to verify." });
   } catch (error) {
     console.error("Error in SignUp:", error.message);
     return res.status(500).json({ error: "Something went wrong" });
@@ -139,6 +173,10 @@ export const Login = async (req, res) => {
       return res.status(400).json({ error: "Incorrect password" });
     }
 
+    if (!user.isVerified) {
+      return res.status(400).json({ error: "Please verify your email first" });
+    }
+
     const token = jwt.sign(
       { id: user._id, username: user.username },
       process.env.JWT_SECRET || "your_jwt_secret",
@@ -202,9 +240,6 @@ export const GetMe = async (req, res) => {
 // PASSWORD RESET (OTP)
 // =========================
 import crypto from "crypto";
-import nodemailer from "nodemailer";
-// Optional: Twilio for SMS if TWILIO configured
-import twilio from "twilio";
 
 export const requestPasswordReset = async (req, res) => {
   try {
@@ -326,6 +361,91 @@ export const resetPassword = async (req, res) => {
     return res.status(200).json({ message: "Password reset successful" });
   } catch (err) {
     console.error("resetPassword error:", err);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+// =========================
+// VERIFY SIGNUP OTP
+// =========================
+export const verifySignupOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp)
+      return res.status(400).json({ error: "Email and OTP are required" });
+
+    const user = await User.findOne({ email });
+    if (!user || !user.otp)
+      return res.status(400).json({ error: "Invalid request" });
+
+    if (user.otp !== otp) return res.status(400).json({ error: "Invalid OTP" });
+    if (user.otpExpires < new Date())
+      return res.status(400).json({ error: "OTP expired" });
+
+    // Verify the user
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpires = null;
+    await user.save();
+
+    return res.status(200).json({ message: "Email verified successfully" });
+  } catch (err) {
+    console.error("verifySignupOTP error:", err);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+// =========================
+// RESEND SIGNUP OTP
+// =========================
+export const resendSignupOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email is required" });
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (user.isVerified) return res.status(400).json({ error: "User already verified" });
+
+    // Generate new OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    user.otp = otp;
+    user.otpExpires = expires;
+    await user.save();
+
+    // Send OTP via email
+    if (process.env.SMTP_HOST) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT || 587,
+          secure: process.env.SMTP_SECURE === "true",
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
+
+        await transporter.sendMail({
+          from: process.env.SMTP_FROM || process.env.SMTP_USER,
+          to: user.email,
+          subject: "Verify your email - OTP (Resent)",
+          text: `Your new OTP for email verification is ${otp}. It expires in 15 minutes.`,
+        });
+
+        return res.status(200).json({ message: "OTP resent successfully" });
+      } catch (err) {
+        console.error("Error resending verification email:", err.message);
+        return res.status(500).json({ error: "Failed to resend verification email" });
+      }
+    } else {
+      // For development, return OTP in response
+      return res.status(200).json({ message: "OTP resent (development)", otp });
+    }
+  } catch (err) {
+    console.error("resendSignupOTP error:", err);
     res.status(500).json({ error: "Something went wrong" });
   }
 };

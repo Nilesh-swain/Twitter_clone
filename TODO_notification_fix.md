@@ -1,0 +1,5 @@
+- [x] Fix typo in Backend/controller/notification.controller.js: change "delectNotification" to "deleteNotification" and "delectOneNotification" to "deleteOneNotification"
+- [x] Fix typo in Backend/router/notification.router.js: change "/delect" to "/delete" and update function names
+- [x] Fix typo in Frontend/src/utils/api.js: change "/notification/delect" to "/notification/delete"
+- [ ] Test notification creation for likes, reposts, comments, follows, bookmarks, posts
+- [ ] Verify frontend displays all notification types correctly

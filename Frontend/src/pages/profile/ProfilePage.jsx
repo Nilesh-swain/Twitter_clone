@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { FaArrowLeft, FaLink } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
 import { IoCalendarOutline } from "react-icons/io5";
+import { BiRepost } from "react-icons/bi";
 
 import Post from "../../components/common/Post";
 import PostSkeleton from "../../components/skeletons/PostSkeleton";
@@ -36,7 +37,11 @@ const ProfilePage = () => {
     queryFn: () =>
       feedType === "posts"
         ? postAPI.getUserPosts(username)
-        : postAPI.getLikedPosts(user?._id),
+        : feedType === "likes"
+        ? postAPI.getLikedPosts(user?._id)
+        : feedType === "reposts"
+        ? postAPI.getRepostedPosts(user?._id)
+        : [],
     enabled: !!username && !!user,
   });
 
@@ -44,6 +49,22 @@ const ProfilePage = () => {
   const isFollowing = currentUser?.following?.includes(user?._id);
 
   const { followUnfollow, isPending } = useFollowUnfollow();
+
+  const queryClient = useQueryClient();
+
+  const { mutate: updateImages, isPending: isUpdating } = useMutation({
+    mutationFn: (data) => userAPI.updateUser(data),
+    onSuccess: () => {
+      toast.success("Profile images updated successfully");
+      setCoverImg(null);
+      setProfileImg(null);
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update images");
+    },
+  });
 
   const handleImgChange = (e, state) => {
     const file = e.target.files[0];
@@ -154,9 +175,10 @@ const ProfilePage = () => {
             {(coverImg || profileImg) && (
               <button
                 className="ml-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5"
-                onClick={() => toast.success("Profile updated successfully")}
+                onClick={() => updateImages({ profileImg, coverImg })}
+                disabled={isUpdating}
               >
-                Update
+                {isUpdating ? "Updating..." : "Update"}
               </button>
             )}
           </div>
@@ -225,6 +247,19 @@ const ProfilePage = () => {
                 <div className="absolute bottom-0 w-10 h-1 rounded-full bg-blue-500" />
               )}
             </div>
+            <div
+              className={`flex justify-center flex-1 p-3 cursor-pointer transition relative ${
+                feedType === "reposts"
+                  ? "font-semibold text-white"
+                  : "text-slate-400 hover:bg-gray-800"
+              }`}
+              onClick={() => setFeedType("reposts")}
+            >
+              Reposts
+              {feedType === "reposts" && (
+                <div className="absolute bottom-0 w-10 h-1 rounded-full bg-blue-500" />
+              )}
+            </div>
           </div>
 
           {/* POSTS */}
@@ -240,11 +275,25 @@ const ProfilePage = () => {
             </p>
           ) : (
             <div className="space-y-4 mt-4">
-              {posts.map((post) => (
-                <div key={post._id} className="mx-2">
-                  <Post post={post} />
-                </div>
-              ))}
+              {feedType === "posts"
+                ? posts.map((feedItem) => (
+                    <Post
+                      key={feedItem.item._id + (feedItem.type === 'repost' ? 'repost' : '')}
+                      post={feedItem.type === 'repost' ? feedItem.item.post : feedItem.item}
+                      repostedBy={feedItem.type === 'repost' ? feedItem.item.user : null}
+                    />
+                  ))
+                : posts.map((post) => (
+                    <div key={post._id} className="mx-2">
+                      {feedType === "reposts" && (
+                        <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
+                          <BiRepost className="w-4 h-4" />
+                          <span>Reposted by @{user.username}</span>
+                        </div>
+                      )}
+                      <Post post={post} />
+                    </div>
+                  ))}
             </div>
           )}
           </div>

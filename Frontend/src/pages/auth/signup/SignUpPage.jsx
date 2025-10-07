@@ -209,7 +209,6 @@
 
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useAuth } from "../../../contexts/AuthContext.jsx";
 import XSvg from "../../../components/svgs/X";
 
 import { MdOutlineMail, MdPassword, MdDriveFileRenameOutline } from "react-icons/md";
@@ -223,12 +222,12 @@ const SignUpPage = () => {
     username: "",
     fullname: "",
     password: "",
+    confirmPassword: "",
   });
 
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   const { mutateAsync } = useMutation({
@@ -252,21 +251,26 @@ const SignUpPage = () => {
     setLoading(true);
     setFormError("");
 
+    if (formData.password !== formData.confirmPassword) {
+      setFormError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
     const signupPromise = (async () => {
-      await mutateAsync(formData);
-      await login({ username: formData.username, password: formData.password });
-      return true;
+      const data = await mutateAsync(formData);
+      return data;
     })();
 
     toast.promise(signupPromise, {
       loading: "Creating account...",
-      success: "Account created and logged in!",
+      success: "Account created! Please verify your email.",
       error: (err) => err.message || "Signup failed",
     });
 
     try {
-      await signupPromise;
-      navigate("/");
+      const data = await signupPromise;
+      navigate("/verify-otp", { state: { email: formData.email, otp: data.otp } });
     } catch (error) {
       setFormError(error.message || "Signup failed");
     } finally {
@@ -342,6 +346,20 @@ const SignUpPage = () => {
                 placeholder="Password"
                 className="flex-1 bg-transparent focus:outline-none"
                 value={formData.password}
+                onChange={handleInputChange}
+                required
+              />
+            </label>
+
+            {/* Confirm Password */}
+            <label className="twitter-input flex items-center gap-3">
+              <MdPassword className="w-5 h-5 text-gray-500" />
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                className="flex-1 bg-transparent focus:outline-none"
+                value={formData.confirmPassword}
                 onChange={handleInputChange}
                 required
               />

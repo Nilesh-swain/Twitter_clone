@@ -1,13 +1,19 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext.jsx";
 import HomePage from "./pages/home/HomePage.jsx";
 import SignUpPage from "./pages/auth/signup/SignUpPage.jsx";
 import LoginPage from "./pages/auth/login/LoginPage.jsx";
+import VerifyOTPPage from "./pages/auth/VerifyOTPPage.jsx";
 import Sidebar from "./components/common/Sidebar.jsx";
 import RightPanel from "./components/common/RightPanel.jsx";
 import Notification from "./pages/notification/NotificationPage.jsx";
 import ProfilePage from "./pages/profile/ProfilePage.jsx";
+import SavedPage from "./pages/saved/SavedPage.jsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MdHomeFilled, MdHome } from "react-icons/md";
+import { IoNotifications, IoNotificationsOutline } from "react-icons/io5";
+import { FaUser, FaRegUser } from "react-icons/fa";
+import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
 
 
 // ✅ Import react-hot-toast
@@ -15,6 +21,41 @@ import { Toaster } from "react-hot-toast";
 
 function App() {
   const { user, loading } = useAuth();
+  const location = useLocation();
+
+  const navigationItems = [
+    {
+      name: "Home",
+      href: "/",
+      icon: MdHome,
+      activeIcon: MdHomeFilled,
+    },
+    {
+      name: "Notifications",
+      href: "/notification",
+      icon: IoNotificationsOutline,
+      activeIcon: IoNotifications,
+    },
+    {
+      name: "Profile",
+      href: `/profile/${user?.username}`,
+      icon: FaRegUser,
+      activeIcon: FaUser,
+    },
+    {
+      name: "Saved",
+      href: "/saved",
+      icon: BsBookmark,
+      activeIcon: BsBookmarkFill,
+    },
+  ];
+
+  const isActive = (href) => {
+    if (href === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(href);
+  };
 
   if (loading) {
     return (
@@ -28,12 +69,14 @@ function App() {
   if (
     !user &&
     (window.location.pathname === "/login" ||
-      window.location.pathname === "/signup")
+      window.location.pathname === "/signup" ||
+      window.location.pathname === "/verify-otp")
   ) {
     return (
       <Routes>
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/verify-otp" element={<VerifyOTPPage />} />
         <Route path="*" element={<LoginPage />} />
       </Routes>
     );
@@ -59,6 +102,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/notification" element={<Notification />} />
             <Route path="/profile/:username" element={<ProfilePage />} />
+            <Route path="/saved" element={<SavedPage />} />
           </Routes>
         </div>
 
@@ -71,21 +115,20 @@ function App() {
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800">
         <div className="flex justify-around py-2">
-          <button className="p-3 text-gray-500 hover:text-white transition-colors">
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-            </svg>
-          </button>
-          <button className="p-3 text-gray-500 hover:text-white transition-colors">
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-            </svg>
-          </button>
-          <button className="p-3 text-gray-500 hover:text-white transition-colors">
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-            </svg>
-          </button>
+          {navigationItems.map((item) => {
+            const Icon = isActive(item.href) ? item.activeIcon : item.icon;
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`p-3 transition-colors ${
+                  isActive(item.href) ? "text-primary" : "text-gray-500 hover:text-white"
+                }`}
+              >
+                <Icon className="w-6 h-6" />
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>

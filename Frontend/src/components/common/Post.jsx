@@ -113,7 +113,7 @@ const CommentItem = ({
   );
 };
 
-const Post = ({ post }) => {
+const Post = ({ post, repostedBy }) => {
   const [comment, setComment] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [replyText, setReplyText] = useState("");
@@ -185,6 +185,30 @@ const Post = ({ post }) => {
     onError: (err) => toast.error(err.message),
   });
 
+  // Repost post mutation
+  const { mutate: repostPost } = useMutation({
+    mutationFn: async () => {
+      return postAPI.repostPost(post._id);
+    },
+    onSuccess: (data) => {
+      toast.success(data.message);
+      queryClient.invalidateQueries(["posts"]); // Refresh posts to update repost count
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  // Bookmark post mutation
+  const { mutate: bookmarkPost } = useMutation({
+    mutationFn: async () => {
+      return postAPI.bookmarkPost(post._id);
+    },
+    onSuccess: (data) => {
+      toast.success(data.message);
+      queryClient.invalidateQueries(["authUser"]); // Refresh authUser to update bookmarks
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   // Comment on post mutation
   const { mutate: commentOnPost, isLoading: isCommenting } = useMutation({
     mutationFn: async (commentText) => {
@@ -215,6 +239,8 @@ const Post = ({ post }) => {
   const postOwner = post?.user;
   const isMyPost = authUser?._id === postOwner?._id;
   const isLiked = post.likes?.includes(authUser?._id) || false;
+  const isReposted = post.reposts?.includes(authUser?._id) || false;
+  const isBookmarked = authUser?.bookmarks?.includes(post._id) || false;
   const formattedDate = timeAgo(post.createdAt);
 
   const handleDeletePost = () => {
@@ -229,6 +255,14 @@ const Post = ({ post }) => {
 
   const handleLikePost = () => {
     likePost();
+  };
+
+  const handleRepostPost = () => {
+    repostPost();
+  };
+
+  const handleBookmarkPost = () => {
+    bookmarkPost();
   };
 
   const handleReply = (commentId) => {
@@ -269,6 +303,12 @@ const Post = ({ post }) => {
 
   return (
     <article className="twitter-post p-6 hover:bg-gray-900/30 transition-all duration-200 rounded-lg border border-gray-800/50 hover:border-gray-700/50">
+      {repostedBy && (
+        <div className="text-gray-500 text-sm mb-2">
+          <BiRepost className="inline w-4 h-4 mr-1" />
+          Reposted by <Link to={`/profile/${repostedBy.username}`} className="text-blue-400 hover:underline">@{repostedBy.username}</Link>
+        </div>
+      )}
       <div className="flex gap-4">
         {/* Profile image */}
         <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-gray-700/50">
@@ -347,9 +387,14 @@ const Post = ({ post }) => {
               </span>
             </button>
 
-            <button className="flex items-center gap-3 p-3 rounded-full hover:bg-green-500/10 text-gray-400 hover:text-green-400 transition-all duration-200 group">
-              <BiRepost className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-medium">0</span>
+            <button
+              className="flex items-center gap-3 p-3 rounded-full hover:bg-green-500/10 text-gray-400 hover:text-green-400 transition-all duration-200 group"
+              onClick={handleRepostPost}
+            >
+              <BiRepost className={`w-5 h-5 group-hover:scale-110 transition-transform ${isReposted ? "text-green-500" : ""}`} />
+              <span className={`text-sm font-medium ${isReposted ? "text-green-500" : ""}`}>
+                {post.reposts?.length || 0}
+              </span>
             </button>
 
             <button
@@ -370,8 +415,11 @@ const Post = ({ post }) => {
               </span>
             </button>
 
-            <button className="flex items-center gap-3 p-3 rounded-full hover:bg-blue-500/10 text-gray-400 hover:text-blue-400 transition-all duration-200 group">
-              <FaRegBookmark className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            <button
+              className="flex items-center gap-3 p-3 rounded-full hover:bg-blue-500/10 text-gray-400 hover:text-blue-400 transition-all duration-200 group"
+              onClick={handleBookmarkPost}
+            >
+              <FaRegBookmark className={`w-5 h-5 group-hover:scale-110 transition-transform ${isBookmarked ? "text-blue-500" : ""}`} />
             </button>
           </div>
         </div>

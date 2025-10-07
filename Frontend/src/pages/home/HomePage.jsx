@@ -6,7 +6,7 @@ const HomePage = () => {
   const [feedType, setFeedType] = useState("forYou");
 
   return (
-    <div className="flex flex-col h-full border-l border-r border-gray-700 bg-[#0f0f10]">
+    <div className="flex flex-col h-full border-l border-r border-gray-700 bg-black">
       {/* Header - Fixed at top */}
       <div className="sticky top-0 bg-black border-b border-gray-700 z-10">
         <div className="flex">

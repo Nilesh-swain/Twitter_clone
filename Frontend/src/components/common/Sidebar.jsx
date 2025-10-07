@@ -7,6 +7,7 @@ import { IoNotifications, IoNotificationsOutline } from "react-icons/io5";
 import { FaUser, FaRegUser } from "react-icons/fa";
 import { BiLogOut } from "react-icons/bi";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
+import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
 import { useState } from "react";
 
 const Sidebar = () => {
@@ -55,6 +56,12 @@ const Sidebar = () => {
       href: `/profile/${user?.username}`,
       icon: FaRegUser,
       activeIcon: FaUser,
+    },
+    {
+      name: "Saved",
+      href: "/saved",
+      icon: BsBookmark,
+      activeIcon: BsBookmarkFill,
     },
   ];
 

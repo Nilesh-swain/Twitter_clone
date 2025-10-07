@@ -85,10 +85,10 @@ const Posts = ({ feedType = "forYou" }) => {
   } = useQuery({
     queryKey: ["posts", feedType, user?._id],
     queryFn: () => fetchPosts(feedType),
-    enabled: !!user,
+    enabled: feedType === "forYou" || !!user,
   });
 
-  if (!user) {
+  if (!user && feedType === "following") {
     return (
       <div className="flex justify-center items-center h-64">
         <p className="text-gray-500">Please log in to see posts</p>
@@ -97,9 +97,9 @@ const Posts = ({ feedType = "forYou" }) => {
   }
 
   return (
-    <div className="flex flex-col items-center">
+    <>
       {isLoading && (
-        <div className="w-full max-w-xl">
+        <div className="flex flex-col justify-center">
           <PostSkeleton />
           <PostSkeleton />
           <PostSkeleton />
@@ -112,13 +112,21 @@ const Posts = ({ feedType = "forYou" }) => {
         <p className="text-center my-4">No posts in this tab. Switch 👻</p>
       )}
       {!isLoading && !error && posts && (
-        <div className="w-full max-w-xl space-y-4">
-          {posts.map((post) => (
-            <Post key={post._id} post={post} />
-          ))}
+        <div className="space-y-4">
+          {feedType === "following"
+            ? posts.map((feedItem) => (
+                <Post
+                  key={feedItem.item._id + (feedItem.type === 'repost' ? 'repost' : '')}
+                  post={feedItem.type === 'repost' ? feedItem.item.post : feedItem.item}
+                  repostedBy={feedItem.type === 'repost' ? feedItem.item.user : null}
+                />
+              ))
+            : posts.map((post) => (
+                <Post key={post._id} post={post} />
+              ))}
         </div>
       )}
-    </div>
+    </>
   );
 };
 

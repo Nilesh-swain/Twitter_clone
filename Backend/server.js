@@ -40,8 +40,8 @@ app.use(
   })
 );
 
-app.use(express.json()); // Middleware to parse JSON bodies.
-app.use(express.urlencoded({ extended: true })); // Middleware to parse URL-encoded bodies.
+app.use(express.json({ limit: '10mb' })); // Middleware to parse JSON bodies.
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Middleware to parse URL-encoded bodies.
 
 app.use(cookieParser());
 

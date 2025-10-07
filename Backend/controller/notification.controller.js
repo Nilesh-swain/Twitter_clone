@@ -15,18 +15,18 @@ export const getNotification = async (req, res) => {
   }
 };
 
-export const delectNotification = async (req, res) => {
+export const deleteNotification = async (req, res) => {
   try {
     const userId = req.user._id;
     await Notification.deleteMany({ to: userId });
     res.status(200).json({ message: "Notification Deleted" });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
-    console.log("error in delectnotification function", error.message);
+    console.log("error in deleteNotification function", error.message);
   }
 };
 
-export const delectOneNotification = async (req, res) => {
+export const deleteOneNotification = async (req, res) => {
   try {
     const notificationId = req.params.id;
     const userId = req.user._id;
@@ -46,6 +46,6 @@ export const delectOneNotification = async (req, res) => {
       .json({ message: "this notification will deleted successfully." });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
-    console.log("error in delectOneNotification function", error.message);
+    console.log("error in deleteOneNotification function", error.message);
   }
 };

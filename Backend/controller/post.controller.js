@@ -1,6 +1,7 @@
 import Notification from "../model/notification.model.js";
 import User from "../model/user.model.js";
 import Post from "../model/post.model.js";
+import Repost from "../model/repost.model.js";
 import { v2 as cloudinary } from "cloudinary";
 
 export const createpost = async (req, res) => {
@@ -26,6 +27,22 @@ export const createpost = async (req, res) => {
     });
 
     await newPost.save();
+
+    // Create notifications for all followers about the new post
+    const followers = user.followers || [];
+    console.log(`User ${userId} has ${followers.length} followers`);
+    for (const followerId of followers) {
+      if (followerId.toString() !== userId) {
+        const notification = new Notification({
+          from: userId,
+          to: followerId,
+          type: "post",
+        });
+        await notification.save();
+        console.log(`Notification created for follower ${followerId}`);
+      }
+    }
+
     console.log("Post created successfully:", newPost._id);
     return res.status(201).json(newPost);
   } catch (error) {
@@ -120,6 +137,17 @@ export const CommentOnPost = async (req, res) => {
     postDoc.comments.push(comment);
     await postDoc.save();
 
+    // Create notification for comment
+    if (postDoc.user.toString() !== userId.toString()) {
+      const notification = new Notification({
+        from: userId,
+        to: postDoc.user,
+        type: "comment",
+      });
+      await notification.save();
+      console.log(`Notification created for comment on post ${postId} by user ${userId} to ${postDoc.user}`);
+    }
+
     return res
       .status(200)
       .json({ message: "Comment added successfully", post: postDoc });
@@ -149,17 +177,103 @@ export const likeUnlikePost = async (req, res) => {
       await User.updateOne({ _id: userId }, { $push: { likes: postId } });
       await post.save();
 
-      const notification = new Notification({
-        from: userId,
-        to: post.user,
-        type: "like",
-      });
-      await notification.save();
+      // Only create notification if user is not liking their own post
+      if (post.user.toString() !== userId.toString()) {
+        const notification = new Notification({
+          from: userId,
+          to: post.user,
+          type: "like",
+        });
+        await notification.save();
+      }
 
       res.status(200).json({ message: "Post liked successfully" });
     }
   } catch (error) {
     console.error("Error in likeUnlikePost:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const repostUnrepostPost = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { id: postId } = req.params;
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    if (post.user.toString() === userId.toString()) {
+      return res.status(400).json({ message: "You cannot repost your own post" });
+    }
+
+    const existingRepost = await Repost.findOne({ user: userId, post: postId });
+
+    if (existingRepost) {
+      // unrepost
+      await Repost.findByIdAndDelete(existingRepost._id);
+      await Post.updateOne({ _id: postId }, { $pull: { reposts: userId } });
+      await User.updateOne({ _id: userId }, { $pull: { reposts: postId } });
+      res.status(200).json({ message: "Post unreposted successfully" });
+    } else {
+      // repost
+      const newRepost = new Repost({
+        user: userId,
+        post: postId,
+      });
+      await newRepost.save();
+      await Post.updateOne({ _id: postId }, { $push: { reposts: userId } });
+      await User.updateOne({ _id: userId }, { $push: { reposts: postId } });
+
+      // Create notification
+      const notification = new Notification({
+        from: userId,
+        to: post.user,
+        type: "repost",
+      });
+      await notification.save();
+
+      res.status(200).json({ message: "Post reposted successfully" });
+    }
+  } catch (error) {
+    console.error("Error in repostUnrepostPost:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const bookmarkUnbookmarkPost = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { id: postId } = req.params;
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    const userBookmarkedPost = await User.findOne({ _id: userId, bookmarks: postId });
+    if (userBookmarkedPost) {
+      await User.updateOne({ _id: userId }, { $pull: { bookmarks: postId } });
+      res.status(200).json({ message: "Post unbookmarked successfully" });
+    } else {
+      // Prevent bookmarking own post
+      if (post.user.toString() === userId.toString()) {
+        return res.status(400).json({ message: "You cannot bookmark your own post" });
+      }
+      await User.updateOne({ _id: userId }, { $push: { bookmarks: postId } });
+
+      // Create notification for the post owner
+      const notification = new Notification({
+        from: userId,
+        to: post.user,
+        type: "bookmark",
+      });
+      await notification.save();
+
+      res.status(200).json({ message: "Post bookmarked successfully" });
+    }
+  } catch (error) {
+    console.error("Error in bookmarkUnbookmarkPost:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -214,7 +328,9 @@ export const GetFollowingPosts = async (req, res) => {
     }
 
     const following = user.following;
-    const posts = await Post.find({ user: { $in: following } })
+
+    // Get original posts
+    const originalPosts = await Post.find({ user: { $in: following } })
       .sort({ createdAt: -1 })
       .populate("user", "-password")
       .populate({
@@ -222,10 +338,38 @@ export const GetFollowingPosts = async (req, res) => {
         select: "-password",
       });
 
-    return res.status(200).json(posts);
+    // Get reposts by following users
+    const reposts = await Repost.find({ user: { $in: following } })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "post",
+        populate: {
+          path: "user",
+          select: "-password",
+        },
+      })
+      .populate({
+        path: "post",
+        populate: {
+          path: "comments.user",
+          select: "-password",
+        },
+      })
+      .populate({
+        path: "user",
+        select: "-password",
+      });
+
+    // Combine and sort by createdAt (for original, post.createdAt, for repost, repost.createdAt)
+    const feedItems = [
+      ...originalPosts.map(post => ({ type: 'post', item: post, createdAt: post.createdAt })),
+      ...reposts.map(repost => ({ type: 'repost', item: repost, createdAt: repost.createdAt })),
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.status(200).json(feedItems);
   } catch (error) {
-    res.status(500).json({ message: "Internal Server Error" });
-    console.error("Error in GetFollowingPosts:", error);
+    console.error("Error in GetFollowingPosts controller: ", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -236,16 +380,98 @@ export const getUserPost = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const posts = await Post.find({ user: user._id })
+
+    // Get original posts
+    const originalPosts = await Post.find({ user: user._id })
       .sort({ createdAt: -1 })
       .populate("user", "-password")
       .populate({
         path: "comments.user",
         select: "-password",
       });
-    return res.status(200).json(posts);
+
+    // Get reposts by the user
+    const reposts = await Repost.find({ user: user._id })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "post",
+        populate: {
+          path: "user",
+          select: "-password",
+        },
+      })
+      .populate({
+        path: "post",
+        populate: {
+          path: "comments.user",
+          select: "-password",
+        },
+      })
+      .populate({
+        path: "user",
+        select: "-password",
+      });
+
+    // Combine and sort by createdAt
+    const feedItems = [
+      ...originalPosts.map(post => ({ type: 'post', item: post, createdAt: post.createdAt })),
+      ...reposts.map(repost => ({ type: 'repost', item: repost, createdAt: repost.createdAt })),
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return res.status(200).json(feedItems);
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error" });
     console.error("Error in getUserPost:", error);
+  }
+};
+
+export const getBookmarkedPosts = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const bookmarkedPosts = await Post.find({ _id: { $in: user.bookmarks } })
+      .sort({ createdAt: -1 })
+      .populate("user", "-password")
+      .populate({
+        path: "comments.user",
+        select: "-password",
+      });
+
+    return res.status(200).json(bookmarkedPosts);
+  } catch (error) {
+    console.error("Error in getBookmarkedPosts:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getRepostedPosts = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const reposts = await Repost.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "post",
+        populate: {
+          path: "user",
+          select: "-password",
+        },
+      })
+      .populate({
+        path: "post",
+        populate: {
+          path: "comments.user",
+          select: "-password",
+        },
+      });
+
+    const posts = reposts.map(repost => repost.post);
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error("Error in getRepostedPosts controller: ", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

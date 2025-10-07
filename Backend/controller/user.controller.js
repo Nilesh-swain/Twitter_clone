@@ -266,8 +266,6 @@ export const UpdateUser = async (req, res) => {
           user.profileImg.split("/").pop().split(".")[0]
         );
       }
-      const uploadResponse = await cloudinary.uploader.upload(profileImg);
-      profileImg = uploadResponse.secure_url;
     }
     if (coverImg) {
       //it is for deleting the old image from the cloudinary.
@@ -276,8 +274,6 @@ export const UpdateUser = async (req, res) => {
           user.coverImg.split("/").pop().split(".")[0]
         );
       }
-      const uploadResponse = await cloudinary.uploader.upload(coverImg);
-      coverImg = uploadResponse.secure_url;
     }
     user.fullname = fullname || user.fullname;
     user.email = email || user.email;
