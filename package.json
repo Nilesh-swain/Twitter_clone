@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "start": "cd Backend && npm run build && npm start"
+  },
   "dependencies": {
     "nodemailer": "^7.0.6"
   }

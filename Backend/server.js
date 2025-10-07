@@ -2,6 +2,8 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 import { v2 as cloudinary } from "cloudinary";
 
 import authRouter from "./router/auth.router.js";
@@ -11,6 +13,9 @@ import notificationRouter from "./router/notification.router.js";
 import uploadRouter from "./router/upload.router.js";
 
 import connectMangoDB from "./DB/connectmangodb.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // This bellows 2 lines will used for to access .env file
 import dotenv from "dotenv";
@@ -52,9 +57,17 @@ app.use("/api/upload", uploadRouter); // Mount the upload router.
 
 app.use("/api/notification", notificationRouter);
 
-// Catch-all for unknown routes, always return JSON
-app.use((req, res, next) => {
-  res.status(404).json({ error: "Not Found" });
+// Serve static files from the React app build directory
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Catch-all handler: send back React's index.html file for client-side routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+// API 404 handler (placed after static to avoid serving HTML for API routes)
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: "API Not Found" });
 });
 
 // Global error handler to always return JSON

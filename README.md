@@ -90,6 +90,53 @@ npm run dev
 
 The frontend will run on `http://localhost:3001`
 
+## Deployment on Render.com
+
+This project is configured for deployment as a single web service on Render.com.
+
+### Prerequisites
+
+- Render.com account
+- MongoDB Atlas database
+- Cloudinary account (for image uploads)
+- SMTP service (e.g., Gmail) for email notifications
+- Twilio account (for SMS OTP, optional)
+
+### Deployment Steps
+
+1. **Fork or clone the repository to your GitHub account.**
+
+2. **Create a new Web Service on Render.com:**
+   - Connect your GitHub repository
+   - Set the service type to "Web Service"
+   - Set the runtime to "Node"
+   - Set the build command to: `npm run build`
+   - Set the start command to: `npm start`
+   - Set the root directory to: `Backend`
+
+3. **Configure Environment Variables:**
+   In the Render dashboard, add the following environment variables (copy from `.env.example`):
+
+   - `PORT`: 10000 (or any available port)
+   - `NODE_ENV`: production
+   - `MONGO_URI`: Your MongoDB Atlas connection string
+   - `JWT_SECRET`: A secure random string
+   - `CLIENT_URL`: Your Render app URL (e.g., https://your-app.onrender.com)
+   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`: From your Cloudinary account
+   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`: For email notifications
+   - `TWILIO_SID`, `TWILIO_TOKEN`, `TWILIO_FROM`: For SMS OTP (optional)
+
+4. **Deploy:**
+   - Click "Create Web Service"
+   - Render will build and deploy your application
+   - Your app will be available at the provided URL
+
+### Notes
+
+- The build process will install frontend dependencies, build the React app, and copy the build files to the Backend directory.
+- The backend serves both the API and the static frontend files.
+- For local testing of the production build, run `npm run build` in the Backend directory, then `npm start`.
+
 ## Prerequisites
 
 - Node.js (v16 or higher)

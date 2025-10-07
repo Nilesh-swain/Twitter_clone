@@ -1,6 +1,0 @@
-- [ ] Update Backend/model/notification.model.js to add "bookmark" to the type enum
-- [ ] Modify Backend/controller/post.controller.js bookmarkUnbookmarkPost function to prevent bookmarking own posts and create notifications for the post owner
-- [ ] Create Frontend/src/pages/saved/SavedPage.jsx to display bookmarked posts
-- [ ] Add route for /saved in Frontend/src/App.jsx
-- [ ] Update Frontend/src/pages/notification/NotificationPage.jsx to handle "bookmark" type notifications
-- [ ] Update TODO.md to mark completed tasks
