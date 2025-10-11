@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "cd ../Frontend && npm install && npm run build && cp -r dist ../Backend/dist"
+    "build": "cd ../Frontend && rmdir /s /q node_modules package-lock.json 2>nul && npm install && npm run build && xcopy /e /i dist ..\\Backend\\dist"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

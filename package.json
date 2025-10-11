@@ -4,5 +4,8 @@
   },
   "dependencies": {
     "nodemailer": "^7.0.6"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }
