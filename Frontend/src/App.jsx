@@ -3,7 +3,7 @@ import { useAuth } from "./contexts/AuthContext.jsx";
 import HomePage from "./pages/home/HomePage.jsx";
 import SignUpPage from "./pages/auth/signup/SignUpPage.jsx";
 import LoginPage from "./pages/auth/login/LoginPage.jsx";
-import VerifyOTPPage from "./pages/auth/VerifyOTPPage.jsx";
+// import VerifyOTPPage from "./pages/auth/VerifyOTPPage.jsx";
 import Sidebar from "./components/common/Sidebar.jsx";
 import RightPanel from "./components/common/RightPanel.jsx";
 import Notification from "./pages/notification/NotificationPage.jsx";
