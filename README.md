@@ -50,7 +50,7 @@ npm install
 3. Create a `.env` file in the Backend directory with the following variables:
 
 ```env
-MONGO_URL=mongodb+srv://nileshswain715_db_user:31RD8z0dlilL2fQ5@cluster0.fbmjzwa.mongodb.net/twitter-clone?retryWrites=true&w=majority
+MONGO_URL=Your_Mongodb_Url
 JWT_SECRET=your_jwt_secret_key_here
 PORT=9000
 NODE_ENV=development
@@ -107,6 +107,7 @@ This project is configured for deployment as a single web service on Render.com.
 1. **Fork or clone the repository to your GitHub account.**
 
 2. **Create a new Web Service on Render.com:**
+
    - Connect your GitHub repository
    - Set the service type to "Web Service"
    - Set the runtime to "Node"
@@ -205,4 +206,3 @@ Twitter_clone/
 ## License
 
 This project is licensed under the MIT License.
-
