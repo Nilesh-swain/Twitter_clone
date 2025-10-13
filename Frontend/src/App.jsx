@@ -69,14 +69,12 @@ function App() {
   if (
     !user &&
     (window.location.pathname === "/login" ||
-      window.location.pathname === "/signup" ||
-      window.location.pathname === "/verify-otp")
+      window.location.pathname === "/signup")
   ) {
     return (
       <Routes>
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/verify-otp" element={<VerifyOTPPage />} />
         <Route path="*" element={<LoginPage />} />
       </Routes>
     );

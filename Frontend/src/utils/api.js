@@ -59,6 +59,13 @@ export const authAPI = {
   getMe: async () => {
     return apiRequest("/auth/me");
   },
+
+  resendSignupOTP: async (email) => {
+    return apiRequest("/auth/resend-signup-otp", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
 };
 
 // User API functions

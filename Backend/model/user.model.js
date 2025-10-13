@@ -58,6 +58,10 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    lastResendAt: {
+      type: Date,
+      default: null,
+    },
     likes: [
       {
         type: mongoose.Schema.Types.ObjectId,

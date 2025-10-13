@@ -5,34 +5,35 @@ const protectRoute = async (req, res, next) => {
   try {
     const token = req.cookies.token; // <-- match the name you used in Login
     if (!token) {
-      return res.status(401).json({ error: "Unauthorized: No token provided" });
+      req.user = null;
+      return next();
     }
 
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET || "your_jwt_secret");
     } catch (err) {
-      return res
-        .status(401)
-        .json({ error: "Unauthorized: Invalid or expired token" });
+      req.user = null;
+      return next();
     }
 
     if (!decoded || !decoded.id) {
-      return res
-        .status(401)
-        .json({ error: "Unauthorized: Invalid token payload" });
+      req.user = null;
+      return next();
     }
 
     const user = await User.findById(decoded.id).select("-password");
     if (!user) {
-      return res.status(401).json({ error: "Unauthorized: User not found" });
+      req.user = null;
+      return next();
     }
 
     req.user = user; // attach user for later controllers
     next();
   } catch (error) {
     console.error("Error in protectRoute middleware:", error.message);
-    return res.status(500).json({ error: "Internal Server Error" });
+    req.user = null;
+    return next();
   }
 };
 

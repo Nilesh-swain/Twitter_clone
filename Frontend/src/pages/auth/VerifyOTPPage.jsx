@@ -4,6 +4,7 @@ import XSvg from "../../components/svgs/X";
 import { MdOutlineMail } from "react-icons/md";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { authAPI } from "../../utils/api";
 
 const VerifyOTPPage = () => {
   const [otp, setOtp] = useState("");
@@ -69,15 +70,7 @@ const VerifyOTPPage = () => {
   const handleResendOTP = async () => {
     setResendLoading(true);
     try {
-      const res = await fetch("/api/auth/resend-signup-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-
+      await authAPI.resendSignupOTP(email);
       toast.success("OTP resent successfully!");
     } catch (error) {
       toast.error(error.message || "Failed to resend OTP");

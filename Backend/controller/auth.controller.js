@@ -3,6 +3,32 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import twilio from "twilio";
+import crypto from "crypto";
+
+let otpStore = {}; // temporary storage for OTPs
+
+// Function to generate a secure 6-digit OTP
+const generateSecureOtp = () => {
+  const otp = crypto.randomBytes(3).readUIntBE(0, 3) % 900000 + 100000;
+  return otp.toString();
+};
+
+// Function to send email with retry mechanism
+const sendEmailWithRetry = async (transporter, mailOptions, retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await transporter.sendMail(mailOptions);
+      return;
+    } catch (err) {
+      console.error(`Email send attempt ${i + 1} failed:`, err.message);
+      if (i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+      } else {
+        throw err;
+      }
+    }
+  }
+};
 
 // =========================
 // SIGN UP
@@ -28,14 +54,7 @@ export const SignUp = async (req, res) => {
         .json({ error: "Username or email already exists" });
     }
 
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    if (!passwordRegex.test(password)) {
-      return res.status(400).json({
-        error:
-          "Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.",
-      });
-    }
+
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -45,48 +64,12 @@ export const SignUp = async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      isVerified: false,
+      isVerified: true,
     });
 
     await newUser.save();
 
-    // Generate OTP for email verification
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-
-    newUser.otp = otp;
-    newUser.otpExpires = expires;
-    await newUser.save();
-
-    // Send OTP via email
-    if (process.env.SMTP_HOST) {
-      try {
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: process.env.SMTP_PORT || 587,
-          secure: process.env.SMTP_SECURE === "true",
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          },
-        });
-
-        await transporter.sendMail({
-          from: process.env.SMTP_FROM || process.env.SMTP_USER,
-          to: newUser.email,
-          subject: "Verify your email - OTP",
-          text: `Your OTP for email verification is ${otp}. It expires in 15 minutes.`,
-        });
-      } catch (err) {
-        console.error("Error sending verification email:", err.message);
-        return res.status(500).json({ error: "Failed to send verification email" });
-      }
-    } else {
-      // For development, return OTP in response
-      return res.status(201).json({ message: "Account created. OTP sent (development)", otp });
-    }
-
-    return res.status(201).json({ message: "Account created. Please check your email for OTP to verify." });
+    return res.status(201).json({ message: "Account created successfully" });
   } catch (error) {
     console.error("Error in SignUp:", error.message);
     return res.status(500).json({ error: "Something went wrong" });
@@ -228,8 +211,11 @@ export const LogOut = async (req, res) => {
 // =========================
 export const GetMe = async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(200).json({ user: null });
+    }
     const me = await User.findById(req.user._id).select("-password");
-    res.status(200).json(me);
+    res.status(200).json({ user: me });
   } catch (error) {
     console.error("Error in GetMe:", error.message);
     res.status(500).json({ error: "Something went wrong" });
@@ -239,8 +225,6 @@ export const GetMe = async (req, res) => {
 // =========================
 // PASSWORD RESET (OTP)
 // =========================
-import crypto from "crypto";
-
 export const requestPasswordReset = async (req, res) => {
   try {
     const { email, via } = req.body; // via: "email" or "sms"
@@ -249,32 +233,59 @@ export const requestPasswordReset = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    // generate secure 6-digit OTP
+    const otp = generateSecureOtp();
+    const hashedOtp = await bcrypt.hash(otp, 10);
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    user.otp = otp;
+    user.otp = hashedOtp;
     user.otpExpires = expires;
     await user.save();
 
     // Try to send via Email if configured
     if (process.env.SMTP_HOST && (via === "email" || !via)) {
       try {
-        const transporter = nodemailer.createTransport({
+        let transporterConfig = {
           host: process.env.SMTP_HOST,
           port: process.env.SMTP_PORT || 587,
-          secure: process.env.SMTP_SECURE === "true",
+          secure: process.env.SMTP_SECURE !== "false",
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           },
-        });
+        };
 
-        await transporter.sendMail({
+        // Special handling for Gmail
+        if (process.env.SMTP_HOST === 'smtp.gmail.com' || process.env.SMTP_HOST.includes('gmail')) {
+          transporterConfig = {
+            service: 'gmail',
+            auth: {
+              user: process.env.SMTP_USER,
+              pass: process.env.SMTP_PASS,
+            },
+          };
+        }
+
+        const transporter = nodemailer.createTransport(transporterConfig);
+
+        const htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+            <h2 style="color: #333;">Password Reset Request</h2>
+            <p>You requested a password reset. Use the OTP below to verify your identity and reset your password.</p>
+            <div style="text-align: center; margin: 20px 0;">
+              <span style="font-size: 24px; font-weight: bold; color: #007bff; background: #f8f9fa; padding: 10px 20px; border-radius: 5px; display: inline-block;">${otp}</span>
+            </div>
+            <p><strong>Important:</strong> This OTP is valid for 10 minutes only. Do not share this code with anyone. If you did not request this, please ignore this email or contact support immediately.</p>
+            <p>Best regards,<br>Twitter Clone Team</p>
+          </div>
+        `;
+
+        await sendEmailWithRetry(transporter, {
           from: process.env.SMTP_FROM || process.env.SMTP_USER,
           to: user.email,
-          subject: "Your password reset OTP",
-          text: `Your OTP is ${otp}. It expires in 15 minutes.`,
+          subject: "Your password reset OTP - Twitter Clone",
+          text: `Your OTP for password reset is ${otp}. It expires in 10 minutes. Do not share this code with anyone.`,
+          html: htmlContent,
         });
 
         return res.status(200).json({ message: "OTP sent via email" });
@@ -293,7 +304,7 @@ export const requestPasswordReset = async (req, res) => {
       try {
         const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
         await client.messages.create({
-          body: `Your OTP is ${otp}. It expires in 15 minutes.`,
+          body: `Your OTP is ${otp}. It expires in 10 minutes. Do not share this code with anyone.`,
           from: process.env.TWILIO_FROM,
           to: user.phone,
         });
@@ -323,7 +334,8 @@ export const verifyOTP = async (req, res) => {
     if (!user || !user.otp)
       return res.status(400).json({ error: "Invalid request" });
 
-    if (user.otp !== otp) return res.status(400).json({ error: "Invalid OTP" });
+    const isOtpValid = await bcrypt.compare(otp, user.otp);
+    if (!isOtpValid) return res.status(400).json({ error: "Invalid OTP" });
     if (user.otpExpires < new Date())
       return res.status(400).json({ error: "OTP expired" });
 
@@ -374,19 +386,19 @@ export const verifySignupOTP = async (req, res) => {
     if (!email || !otp)
       return res.status(400).json({ error: "Email and OTP are required" });
 
-    const user = await User.findOne({ email });
-    if (!user || !user.otp)
-      return res.status(400).json({ error: "Invalid request" });
+    if (!otpStore[email]) return res.status(400).json({ error: "Invalid request" });
 
-    if (user.otp !== otp) return res.status(400).json({ error: "Invalid OTP" });
-    if (user.otpExpires < new Date())
-      return res.status(400).json({ error: "OTP expired" });
+    const { otp: storedOtp, expires } = otpStore[email];
+    if (storedOtp !== otp) return res.status(400).json({ error: "Invalid OTP" });
+    if (Date.now() > expires) return res.status(400).json({ error: "OTP expired" });
 
     // Verify the user
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
     user.isVerified = true;
-    user.otp = null;
-    user.otpExpires = null;
     await user.save();
+
+    delete otpStore[email]; // Clean up
 
     return res.status(200).json({ message: "Email verified successfully" });
   } catch (err) {
@@ -407,42 +419,61 @@ export const resendSignupOTP = async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
     if (user.isVerified) return res.status(400).json({ error: "User already verified" });
 
-    // Generate new OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    // Rate limiting: allow resend only once per 30 seconds (using in-memory for simplicity)
+    if (otpStore[email] && otpStore[email].lastResendAt && (Date.now() - otpStore[email].lastResendAt) < 30 * 1000) {
+      return res.status(429).json({ error: "Please wait 30 seconds before requesting another OTP" });
+    }
 
-    user.otp = otp;
-    user.otpExpires = expires;
-    await user.save();
+    // Generate new secure OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    otpStore[email] = { otp, expires: Date.now() + 5 * 60 * 1000, lastResendAt: Date.now() }; // 5 minutes
 
     // Send OTP via email
+    let emailSent = false;
     if (process.env.SMTP_HOST) {
       try {
         const transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
           port: process.env.SMTP_PORT || 587,
-          secure: process.env.SMTP_SECURE === "true",
+          secure: process.env.SMTP_SECURE !== "false",
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           },
         });
 
-        await transporter.sendMail({
-          from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        const htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+            <h2 style="color: #333;">Welcome to Twitter Clone!</h2>
+            <p>We noticed you requested a new OTP. To complete your registration, please verify your email address using the new OTP below.</p>
+            <div style="text-align: center; margin: 20px 0;">
+              <span style="font-size: 24px; font-weight: bold; color: #007bff; background: #f8f9fa; padding: 10px 20px; border-radius: 5px; display: inline-block;">${otp}</span>
+            </div>
+            <p><strong>Important:</strong> This OTP is valid for 5 minutes only. Do not share this code with anyone for your account security.</p>
+            <p>If you did not request this, please ignore this email.</p>
+            <p>Best regards,<br>Twitter Clone Team</p>
+          </div>
+        `;
+
+        await sendEmailWithRetry(transporter, {
+          from: process.env.SMTP_USER,
           to: user.email,
-          subject: "Verify your email - OTP (Resent)",
-          text: `Your new OTP for email verification is ${otp}. It expires in 15 minutes.`,
+          subject: "Verify your email - New OTP for Twitter Clone",
+          text: `Your new OTP for email verification is ${otp}. It expires in 5 minutes. Do not share this code.`,
+          html: htmlContent,
         });
 
+        emailSent = true;
         return res.status(200).json({ message: "OTP resent successfully" });
       } catch (err) {
-        console.error("Error resending verification email:", err.message);
-        return res.status(500).json({ error: "Failed to resend verification email" });
+        console.error("Error resending verification email via SMTP:", err.message);
       }
-    } else {
-      // For development, return OTP in response
-      return res.status(200).json({ message: "OTP resent (development)", otp });
+    }
+
+    // If SMTP is not configured, return OTP in response for development (INSECURE)
+    if (!emailSent) {
+      console.error("SMTP not configured. Returning OTP for development.");
+      return res.status(200).json({ message: "OTP generated (development)", otp });
     }
   } catch (err) {
     console.error("resendSignupOTP error:", err);

@@ -21,10 +21,15 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      const userData = await authAPI.getMe();
-      setUser(userData);
+      const response = await authAPI.getMe();
+      setUser(response.user);
     } catch (error) {
-      console.error("Auth check failed:", error);
+      // Only log as error if it's not a 401 (unauthorized)
+      if (error.message && error.message.includes("401")) {
+        console.log("User not authenticated");
+      } else {
+        console.error("Auth check failed:", error);
+      }
       setUser(null);
     } finally {
       setLoading(false);
