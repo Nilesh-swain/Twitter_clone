@@ -43,7 +43,7 @@ app.use(
     origin: [
       process.env.CLIENT_URL || "http://localhost:5173",
       "http://localhost:3001",
-      "https://ns2-twitter.onrender.com"
+      "https://ns-twitter.onrender.com"
     ],
     credentials: true,
   })
