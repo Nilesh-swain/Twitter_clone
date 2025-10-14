@@ -430,11 +430,9 @@ export const resendSignupOTP = async (req, res) => {
       otpStore[email].lastResendAt &&
       Date.now() - otpStore[email].lastResendAt < 30 * 1000
     ) {
-      return res
-        .status(429)
-        .json({
-          error: "Please wait 30 seconds before requesting another OTP",
-        });
+      return res.status(429).json({
+        error: "Please wait 30 seconds before requesting another OTP",
+      });
     }
 
     // Generate new secure OTP
