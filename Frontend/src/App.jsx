@@ -64,31 +64,17 @@ function App() {
   }
 
   // Show auth pages without sidebar
-  if (
-    !user &&
-    (window.location.pathname === "/login" ||
-      window.location.pathname === "/signup")
-  ) {
+  if (!user) {
     return (
       <Routes>
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="*" element={<LoginPage />} />
+        <Route path="*" element={<SignUpPage />} />
       </Routes>
     );
   }
 
-  // Redirect to login if not authenticated for protected pages
-  if (
-    !user &&
-    !loading &&
-    (location.pathname === "/notification" ||
-      location.pathname.startsWith("/profile") ||
-      location.pathname === "/saved")
-  ) {
-    window.location.href = "/login";
-    return null;
-  }
+  // No need for redirect since if !user, we show auth pages above
 
   return (
     <div className="min-h-screen bg-black text-white">
