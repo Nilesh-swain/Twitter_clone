@@ -60,7 +60,6 @@
 //   </StrictMode>
 // );
 
-import { Toaster } from "react-hot-toast";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
@@ -83,28 +82,6 @@ createRoot(document.getElementById("root")).render(
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
           <App />
-
-          {/* ✅ Global Toaster – only one in the project */}
-          <Toaster
-            position="top-center"
-            reverseOrder={false}
-            gutter={8}
-            toastOptions={{
-              duration: 3000,
-              style: {
-                background: "#222",
-                color: "#fff",
-                fontSize: "1rem",
-                borderRadius: "10px",
-                padding: "12px 16px",
-                boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
-              },
-              success: { iconTheme: { primary: "#00ba7c", secondary: "#fff" } },
-              error: { iconTheme: { primary: "#f4212e", secondary: "#fff" } },
-            }}
-            containerStyle={{ top: 20 }}
-            limit={1} // 🔥 only one toast visible
-          />
         </QueryClientProvider>
       </AuthProvider>
     </BrowserRouter>

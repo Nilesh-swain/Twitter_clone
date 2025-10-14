@@ -10,7 +10,6 @@
     "build": "npm install && cd ../Frontend && rm -rf node_modules package-lock.json && NODE_ENV=development npm install && npm run build && cp -r dist ../Backend/dist"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^1.41.0",
     "cookie-parser": "^1.4.6",

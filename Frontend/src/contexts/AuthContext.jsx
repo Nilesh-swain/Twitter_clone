@@ -15,20 +15,25 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Check login state once on mount
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
   const checkAuthStatus = async () => {
     try {
+      setLoading(true);
       const response = await authAPI.getMe();
-      setUser(response.user);
+
+      // handle both possible response shapes
+      const currentUser = response.user || response.data?.user || response;
+      setUser(currentUser);
+      console.log("✅ Authenticated user:", currentUser);
     } catch (error) {
-      // Only log as error if it's not a 401 (unauthorized)
-      if (error.message && error.message.includes("401")) {
-        console.log("User not authenticated");
+      if (error.response && error.response.status === 401) {
+        console.log("⚠️ User not authenticated");
       } else {
-        console.error("Auth check failed:", error);
+        console.error("❌ Auth check failed:", error);
       }
       setUser(null);
     } finally {
@@ -38,19 +43,25 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      const userData = await authAPI.login(credentials);
-      setUser(userData);
-      return userData;
+      const response = await authAPI.login(credentials);
+      const loggedInUser = response.user || response.data?.user || response;
+      setUser(loggedInUser);
+      console.log("✅ User logged in:", loggedInUser);
+      return loggedInUser;
     } catch (error) {
+      console.error("❌ Login failed:", error);
       throw error;
     }
   };
 
   const signup = async (userData) => {
     try {
-      const newUser = await authAPI.signup(userData);
+      const response = await authAPI.signup(userData);
+      const newUser = response.user || response.data?.user || response;
+      console.log("✅ Signup successful:", newUser);
       return newUser;
     } catch (error) {
+      console.error("❌ Signup failed:", error);
       throw error;
     }
   };
@@ -58,11 +69,11 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await authAPI.logout();
-      setUser(null);
+      console.log("👋 Logged out successfully");
     } catch (error) {
-      console.error("Logout error:", error);
-      // Even if logout fails on server, clear local state
-      setUser(null);
+      console.error("⚠️ Logout error:", error);
+    } finally {
+      setUser(null); // Always clear local state
     }
   };
 
@@ -77,4 +88,3 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-

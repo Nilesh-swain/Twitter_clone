@@ -7,7 +7,7 @@ import { useAuth } from "../../contexts/AuthContext.jsx";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { uploadImageToCloudinary } from "../../utils/cloudinaryUpload.js";
-import EmojiPicker from 'emoji-picker-react';
+import EmojiPicker from "emoji-picker-react";
 
 const CreatePost = () => {
   const [text, setText] = useState("");
@@ -71,8 +71,8 @@ const CreatePost = () => {
       <div className="flex gap-5">
         <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-primary">
           <img
-            src={user.profileImg || "/avatar-placeholder.png"}
-            alt={user.fullname}
+            src={user?.profileImg || "/avatar-placeholder.png"}
+            alt={user?.fullname || "User"}
             className="w-full h-full object-cover"
           />
         </div>

@@ -4,11 +4,12 @@ import { FaRegHeart, FaHeart } from "react-icons/fa";
 import { FaRegBookmark } from "react-icons/fa6";
 import { FaTrash } from "react-icons/fa";
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import LoadingSpinner from "./LoadingSpinner";
 import { postAPI } from "../../utils/api.js";
+import { useAuth } from "../../contexts/AuthContext.jsx";
 
 const CommentItem = ({
   comment,
@@ -23,7 +24,7 @@ const CommentItem = ({
   isReplying,
   depth = 0,
 }) => {
-  const isAuthor = comment.user._id === postOwnerId;
+  const isAuthor = comment.user?._id === postOwnerId;
 
   return (
     <div
@@ -143,15 +144,8 @@ const Post = ({ post, repostedBy }) => {
     return 'now';
   };
 
-  // Get current user
-  const { data: authUser } = useQuery({
-    queryKey: ["authUser"],
-    queryFn: async () => {
-      const res = await fetch("/api/auth/me", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch auth user");
-      return res.json();
-    },
-  });
+  // Get current user from AuthContext
+  const { user: authUser } = useAuth();
 
   // Delete post mutation
   const { mutate: deletePost, isLoading: isDeleting } = useMutation({
@@ -427,58 +421,60 @@ const Post = ({ post, repostedBy }) => {
 
       {/* Comments Modal */}
       <dialog id={`comments_modal${post._id}`} className="modal">
-        <div className="modal-box max-w-2xl">
-          <h3 className="font-bold text-lg mb-4">Replies</h3>
-          <div className="max-h-96 overflow-y-auto space-y-4">
-            {topLevel.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
-                No replies yet. Be the first to reply! 😉
-              </p>
-            ) : (
-              topLevel.map((comment) => (
-                <CommentItem
-                  key={comment._id}
-                  comment={comment}
-                  replies={replies[comment._id] || []}
-                  postOwnerId={postOwner?._id}
-                  onReply={handleReply}
-                  replyTo={replyTo}
-                  replyText={replyText}
-                  setReplyText={setReplyText}
-                  onPostReply={handlePostReply}
-                  onCancelReply={handleCancelReply}
-                  isReplying={isReplying}
-                />
-              ))
-            )}
-          </div>
-          <form
-            className="flex gap-2 items-center mt-4 pt-4 border-t border-gray-800"
-            onSubmit={handlePostComment}
-          >
-            <textarea
-              className="flex-1 bg-transparent border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-primary"
-              placeholder="Post your reply..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows="2"
-            />
-            <button
-              type="submit"
-              className="twitter-button px-4 py-2 text-sm font-semibold"
-              disabled={isCommenting || !comment.trim()}
-            >
-              {isCommenting ? (
-                <div className="loading-spinner w-4 h-4"></div>
+        <>
+          <div className="modal-box max-w-2xl">
+            <h3 className="font-bold text-lg mb-4">Replies</h3>
+            <div className="max-h-96 overflow-y-auto space-y-4">
+              {topLevel.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">
+                  No replies yet. Be the first to reply! 😉
+                </p>
               ) : (
-                "Reply"
+                topLevel.map((comment) => (
+                  <CommentItem
+                    key={comment._id}
+                    comment={comment}
+                    replies={replies[comment._id] || []}
+                    postOwnerId={postOwner?._id}
+                    onReply={handleReply}
+                    replyTo={replyTo}
+                    replyText={replyText}
+                    setReplyText={setReplyText}
+                    onPostReply={handlePostReply}
+                    onCancelReply={handleCancelReply}
+                    isReplying={isReplying}
+                  />
+                ))
               )}
-            </button>
+            </div>
+            <form
+              className="flex gap-2 items-center mt-4 pt-4 border-t border-gray-800"
+              onSubmit={handlePostComment}
+            >
+              <textarea
+                className="flex-1 bg-transparent border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-primary"
+                placeholder="Post your reply..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                rows="2"
+              />
+              <button
+                type="submit"
+                className="twitter-button px-4 py-2 text-sm font-semibold"
+                disabled={isCommenting || !comment.trim()}
+              >
+                {isCommenting ? (
+                  <div className="loading-spinner w-4 h-4"></div>
+                ) : (
+                  "Reply"
+                )}
+              </button>
+            </form>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button>close</button>
           </form>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button>close</button>
-        </form>
+        </>
       </dialog>
     </article>
   );

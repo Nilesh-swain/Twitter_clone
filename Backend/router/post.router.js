@@ -17,7 +17,7 @@ import {
 } from "../controller/post.controller.js";
 
 const router = express.Router();
-router.get("/all", protectRoute, GetallPosts);
+router.get("/all", GetallPosts);
 router.get("/following", protectRoute, GetFollowingPosts);
 router.get("/likes/:id", protectRoute, GetLikedPosts);
 router.post("/create", protectRoute, createpost);

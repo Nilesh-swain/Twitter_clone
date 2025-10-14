@@ -1,5 +1,5 @@
 import User from "../model/user.model.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import twilio from "twilio";
@@ -9,7 +9,7 @@ let otpStore = {}; // temporary storage for OTPs
 
 // Function to generate a secure 6-digit OTP
 const generateSecureOtp = () => {
-  const otp = crypto.randomBytes(3).readUIntBE(0, 3) % 900000 + 100000;
+  const otp = (crypto.randomBytes(3).readUIntBE(0, 3) % 900000) + 100000;
   return otp.toString();
 };
 
@@ -22,7 +22,7 @@ const sendEmailWithRetry = async (transporter, mailOptions, retries = 3) => {
     } catch (err) {
       console.error(`Email send attempt ${i + 1} failed:`, err.message);
       if (i < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 second delay
       } else {
         throw err;
       }
@@ -53,8 +53,6 @@ export const SignUp = async (req, res) => {
         .status(400)
         .json({ error: "Username or email already exists" });
     }
-
-
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -256,9 +254,12 @@ export const requestPasswordReset = async (req, res) => {
         };
 
         // Special handling for Gmail
-        if (process.env.SMTP_HOST === 'smtp.gmail.com' || process.env.SMTP_HOST.includes('gmail')) {
+        if (
+          process.env.SMTP_HOST === "smtp.gmail.com" ||
+          process.env.SMTP_HOST.includes("gmail")
+        ) {
           transporterConfig = {
-            service: 'gmail',
+            service: "gmail",
             auth: {
               user: process.env.SMTP_USER,
               pass: process.env.SMTP_PASS,
@@ -386,11 +387,14 @@ export const verifySignupOTP = async (req, res) => {
     if (!email || !otp)
       return res.status(400).json({ error: "Email and OTP are required" });
 
-    if (!otpStore[email]) return res.status(400).json({ error: "Invalid request" });
+    if (!otpStore[email])
+      return res.status(400).json({ error: "Invalid request" });
 
     const { otp: storedOtp, expires } = otpStore[email];
-    if (storedOtp !== otp) return res.status(400).json({ error: "Invalid OTP" });
-    if (Date.now() > expires) return res.status(400).json({ error: "OTP expired" });
+    if (storedOtp !== otp)
+      return res.status(400).json({ error: "Invalid OTP" });
+    if (Date.now() > expires)
+      return res.status(400).json({ error: "OTP expired" });
 
     // Verify the user
     const user = await User.findOne({ email });
@@ -417,16 +421,29 @@ export const resendSignupOTP = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
-    if (user.isVerified) return res.status(400).json({ error: "User already verified" });
+    if (user.isVerified)
+      return res.status(400).json({ error: "User already verified" });
 
     // Rate limiting: allow resend only once per 30 seconds (using in-memory for simplicity)
-    if (otpStore[email] && otpStore[email].lastResendAt && (Date.now() - otpStore[email].lastResendAt) < 30 * 1000) {
-      return res.status(429).json({ error: "Please wait 30 seconds before requesting another OTP" });
+    if (
+      otpStore[email] &&
+      otpStore[email].lastResendAt &&
+      Date.now() - otpStore[email].lastResendAt < 30 * 1000
+    ) {
+      return res
+        .status(429)
+        .json({
+          error: "Please wait 30 seconds before requesting another OTP",
+        });
     }
 
     // Generate new secure OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    otpStore[email] = { otp, expires: Date.now() + 5 * 60 * 1000, lastResendAt: Date.now() }; // 5 minutes
+    otpStore[email] = {
+      otp,
+      expires: Date.now() + 5 * 60 * 1000,
+      lastResendAt: Date.now(),
+    }; // 5 minutes
 
     // Send OTP via email
     let emailSent = false;
@@ -466,14 +483,19 @@ export const resendSignupOTP = async (req, res) => {
         emailSent = true;
         return res.status(200).json({ message: "OTP resent successfully" });
       } catch (err) {
-        console.error("Error resending verification email via SMTP:", err.message);
+        console.error(
+          "Error resending verification email via SMTP:",
+          err.message
+        );
       }
     }
 
     // If SMTP is not configured, return OTP in response for development (INSECURE)
     if (!emailSent) {
       console.error("SMTP not configured. Returning OTP for development.");
-      return res.status(200).json({ message: "OTP generated (development)", otp });
+      return res
+        .status(200)
+        .json({ message: "OTP generated (development)", otp });
     }
   } catch (err) {
     console.error("resendSignupOTP error:", err);

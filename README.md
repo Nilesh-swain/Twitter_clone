@@ -1,148 +1,121 @@
 # Twitter Clone
 
-A full-stack Twitter clone built with React and Node.js.
+A full-stack Twitter clone built with React, Node.js, Express, and MongoDB.
 
 ## Features
 
-- User authentication (signup/login)
-- Create and view posts
-- Like posts
-- Comment on posts
-- Follow/unfollow users
-- Notifications
-- Responsive design
+- 🔐 User authentication (signup, login, logout)
+- 📝 Create, edit, and delete posts
+- ❤️ Like and unlike posts
+- 🔄 Repost posts
+- 💬 Comment on posts
+- 🔖 Bookmark posts
+- 👥 Follow/unfollow users
+- 🔔 Real-time notifications
+- 📱 Responsive design
+- 🖼️ Image upload with Cloudinary
+- 🔍 Search users
+- 📊 User profiles
 
 ## Tech Stack
+
+### Frontend
+
+- React 19
+- Vite
+- Tailwind CSS
+- DaisyUI
+- React Router
+- React Query
+- React Hot Toast
+- React Icons
+- Emoji Picker
 
 ### Backend
 
 - Node.js
 - Express.js
-- MongoDB with Mongoose
+- MongoDB
+- Mongoose
 - JWT Authentication
-- Cloudinary for image uploads
-- bcrypt for password hashing
+- Cloudinary
+- Nodemailer
+- Twilio
 
-### Frontend
-
-- React 19
-- React Router
-- Tailwind CSS
-- DaisyUI
-- React Icons
-
-## Setup Instructions
-
-### Backend Setup
-
-1. Navigate to the Backend directory:
-
-```bash
-cd Backend
-```
-
-2. Install dependencies:
-
-```bash
-npm install
-```
-
-3. Create a `.env` file in the Backend directory with the following variables:
-
-```env
-MONGO_URL=Your_Mongodb_Url
-JWT_SECRET=your_jwt_secret_key_here
-PORT=9000
-NODE_ENV=development
-CLIENT_URL=http://localhost:3001
-CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-```
-
-4. Start the backend server:
-
-```bash
-npm run dev
-```
-
-The backend will run on `http://localhost:9000`
-
-### Frontend Setup
-
-1. Navigate to the Frontend directory:
-
-```bash
-cd Frontend
-```
-
-2. Install dependencies:
-
-```bash
-npm install
-```
-
-3. Start the development server:
-
-```bash
-npm run dev
-```
-
-The frontend will run on `http://localhost:3001`
-
-## Deployment on Render.com
-
-This project is configured for deployment as a single web service on Render.com.
+## Getting Started
 
 ### Prerequisites
 
-- Render.com account
-- MongoDB Atlas database
-- Cloudinary account (for image uploads)
-- SMTP service (e.g., Gmail) for email notifications
-- Twilio account (for SMS OTP, optional)
+- Node.js (v18 or higher)
+- MongoDB
+- Cloudinary account
 
-### Deployment Steps
+### Installation
 
-1. **Fork or clone the repository to your GitHub account.**
+1. Clone the repository:
 
-2. **Create a new Web Service on Render.com:**
+```bash
+git clone <repository-url>
+cd twitter-clone
+```
 
-   - Connect your GitHub repository
-   - Set the service type to "Web Service"
-   - Set the runtime to "Node"
-   - Set the build command to: `npm run build`
-   - Set the start command to: `npm start`
-   - Set the root directory to: `Backend`
+2. Install dependencies:
 
-3. **Configure Environment Variables:**
-   In the Render dashboard, add the following environment variables (copy from `.env.example`):
+```bash
+# Install root dependencies
+npm install
 
-   - `PORT`: 10000 (or any available port)
-   - `NODE_ENV`: production
-   - `MONGO_URI`: Your MongoDB Atlas connection string
-   - `JWT_SECRET`: A secure random string
-   - `CLIENT_URL`: Your Render app URL (e.g., https://your-app.onrender.com)
-   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`: From your Cloudinary account
-   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`: For email notifications
-   - `TWILIO_SID`, `TWILIO_TOKEN`, `TWILIO_FROM`: For SMS OTP (optional)
+# Install backend dependencies
+cd Backend
+npm install
 
-4. **Deploy:**
-   - Click "Create Web Service"
-   - Render will build and deploy your application
-   - Your app will be available at the provided URL
+# Install frontend dependencies
+cd ../Frontend
+npm install
+```
 
-### Notes
+3. Set up environment variables:
+   Create a `.env` file in the `Backend` directory:
 
-- The build process will install frontend dependencies, build the React app, and copy the build files to the Backend directory.
-- The backend serves both the API and the static frontend files.
-- For local testing of the production build, run `npm run build` in the Backend directory, then `npm start`.
+```env
+MONGO_URI=mongodb://localhost:27017/twitter-clone
+JWT_SECRET=your_jwt_secret_here
+PORT=9000
+CLIENT_URL=http://localhost:5173
+CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
+```
 
-## Prerequisites
+4. Start the development servers:
 
-- Node.js (v16 or higher)
-- MongoDB (local or MongoDB Atlas)
-- Cloudinary account (for image uploads)
+```bash
+# Start backend (from Backend directory)
+npm run dev
+
+# Start frontend (from Frontend directory)
+npm run dev
+```
+
+## Project Structure
+
+```
+twitter-clone/
+├── Backend/
+│   ├── controller/          # Route controllers
+│   ├── model/              # Database models
+│   ├── router/             # API routes
+│   ├── middleware/         # Custom middleware
+│   ├── DB/                 # Database connection
+│   └── server.js           # Main server file
+├── Frontend/
+│   ├── src/
+│   │   ├── components/     # Reusable components
+│   │   ├── pages/          # Page components
+│   │   ├── contexts/       # React contexts
+│   │   ├── utils/          # Utility functions
+│   │   └── hooks/          # Custom hooks
+│   └── public/             # Static assets
+└── package.json           # Root package.json
+```
 
 ## API Endpoints
 
@@ -153,47 +126,34 @@ This project is configured for deployment as a single web service on Render.com.
 - `POST /api/auth/logout` - User logout
 - `GET /api/auth/me` - Get current user
 
+### Posts
+
+- `GET /api/post/all` - Get all posts
+- `GET /api/post/following` - Get following posts
+- `POST /api/post/create` - Create post
+- `DELETE /api/post/:id` - Delete post
+- `POST /api/post/like/:id` - Like/unlike post
+- `POST /api/post/repost/:id` - Repost/unrepost
+- `POST /api/post/bookmark/:id` - Bookmark post
+- `POST /api/post/comment/:id` - Comment on post
+
 ### Users
 
 - `GET /api/user/profile/:username` - Get user profile
 - `POST /api/user/follow/:id` - Follow/unfollow user
 - `GET /api/user/suggested` - Get suggested users
+- `GET /api/user/search` - Search users
 - `POST /api/user/update` - Update user profile
-
-### Posts
-
-- `GET /api/post/all` - Get all posts
-- `GET /api/post/following` - Get following posts
-- `POST /api/post/create` - Create new post
-- `DELETE /api/post/:id` - Delete post
-- `POST /api/post/like/:id` - Like/unlike post
-- `POST /api/post/comment/:id` - Comment on post
 
 ### Notifications
 
 - `GET /api/notification` - Get notifications
-- `DELETE /api/notification/delect` - Delete all notifications
+- `DELETE /api/notification/delete` - Delete all notifications
+- `DELETE /api/notification/delete/:id` - Delete single notification
 
-## Project Structure
+## Deployment
 
-```
-Twitter_clone/
-├── Backend/
-│   ├── controller/     # Route controllers
-│   ├── DB/           # Database connection
-│   ├── middleware/    # Custom middleware
-│   ├── model/        # Database models
-│   ├── router/       # API routes
-│   └── server.js     # Main server file
-├── Frontend/
-│   ├── src/
-│   │   ├── components/  # Reusable components
-│   │   ├── contexts/    # React contexts
-│   │   ├── pages/       # Page components
-│   │   └── utils/       # Utility functions
-│   └── public/       # Static assets
-└── README.md
-```
+See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for detailed deployment instructions.
 
 ## Contributing
 
@@ -206,3 +166,7 @@ Twitter_clone/
 ## License
 
 This project is licensed under the MIT License.
+
+## Support
+
+For support, email your-email@example.com or create an issue in the repository.

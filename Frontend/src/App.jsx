@@ -9,12 +9,10 @@ import RightPanel from "./components/common/RightPanel.jsx";
 import Notification from "./pages/notification/NotificationPage.jsx";
 import ProfilePage from "./pages/profile/ProfilePage.jsx";
 import SavedPage from "./pages/saved/SavedPage.jsx";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MdHomeFilled, MdHome } from "react-icons/md";
 import { IoNotifications, IoNotificationsOutline } from "react-icons/io5";
 import { FaUser, FaRegUser } from "react-icons/fa";
 import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
-
 
 // ✅ Import react-hot-toast
 import { Toaster } from "react-hot-toast";
@@ -80,8 +78,14 @@ function App() {
     );
   }
 
-  // Redirect to login if not authenticated
-  if (!user) {
+  // Redirect to login if not authenticated for protected pages
+  if (
+    !user &&
+    !loading &&
+    (location.pathname === "/notification" ||
+      location.pathname.startsWith("/profile") ||
+      location.pathname === "/saved")
+  ) {
     window.location.href = "/login";
     return null;
   }
@@ -120,7 +124,9 @@ function App() {
                 key={item.name}
                 to={item.href}
                 className={`p-3 transition-colors ${
-                  isActive(item.href) ? "text-primary" : "text-gray-500 hover:text-white"
+                  isActive(item.href)
+                    ? "text-primary"
+                    : "text-gray-500 hover:text-white"
                 }`}
               >
                 <Icon className="w-6 h-6" />
@@ -129,6 +135,28 @@ function App() {
           })}
         </div>
       </div>
+
+      {/* Global Toaster */}
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        gutter={8}
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: "#222",
+            color: "#fff",
+            fontSize: "1rem",
+            borderRadius: "10px",
+            padding: "12px 16px",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+          },
+          success: { iconTheme: { primary: "#00ba7c", secondary: "#fff" } },
+          error: { iconTheme: { primary: "#f4212e", secondary: "#fff" } },
+        }}
+        containerStyle={{ top: 20 }}
+        limit={1}
+      />
     </div>
   );
 }

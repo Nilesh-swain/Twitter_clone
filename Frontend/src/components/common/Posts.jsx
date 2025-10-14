@@ -61,7 +61,6 @@
 // };
 // export default Posts;
 
-
 import { useQuery } from "@tanstack/react-query";
 import Post from "./Post.jsx";
 import PostSkeleton from "../skeletons/PostSkeleton.jsx";
@@ -69,10 +68,15 @@ import { postAPI } from "../../utils/api.js";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 
 const fetchPosts = async (feedType) => {
-  if (feedType === "following") {
-    return postAPI.getFollowingPosts();
+  try {
+    if (feedType === "following") {
+      return await postAPI.getFollowingPosts();
+    }
+    return await postAPI.getAllPosts();
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    throw error;
   }
-  return postAPI.getAllPosts();
 };
 
 const Posts = ({ feedType = "forYou" }) => {
@@ -85,9 +89,10 @@ const Posts = ({ feedType = "forYou" }) => {
   } = useQuery({
     queryKey: ["posts", feedType, user?._id],
     queryFn: () => fetchPosts(feedType),
-    enabled: feedType === "forYou" || !!user,
+    enabled: !!user,
   });
 
+  // Show login message for following feed when not authenticated
   if (!user && feedType === "following") {
     return (
       <div className="flex justify-center items-center h-64">
@@ -96,37 +101,63 @@ const Posts = ({ feedType = "forYou" }) => {
     );
   }
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col justify-center">
+        <PostSkeleton />
+        <PostSkeleton />
+        <PostSkeleton />
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <p className="text-center my-4 text-red-500">Failed to load posts</p>
+    );
+  }
+
+  // Show empty state
+  if (!posts || posts.length === 0) {
+    return (
+      <p className="text-center my-4">No posts in this tab. Switch 👻</p>
+    );
+  }
+
+  // Render posts
   return (
-    <>
-      {isLoading && (
-        <div className="flex flex-col justify-center">
-          <PostSkeleton />
-          <PostSkeleton />
-          <PostSkeleton />
-        </div>
-      )}
-      {!isLoading && error && (
-        <p className="text-center my-4 text-red-500">Failed to load posts</p>
-      )}
-      {!isLoading && !error && posts?.length === 0 && (
-        <p className="text-center my-4">No posts in this tab. Switch 👻</p>
-      )}
-      {!isLoading && !error && posts && (
-        <div className="space-y-4">
-          {feedType === "following"
-            ? posts.map((feedItem) => (
-                <Post
-                  key={feedItem.item._id + (feedItem.type === 'repost' ? 'repost' : '')}
-                  post={feedItem.type === 'repost' ? feedItem.item.post : feedItem.item}
-                  repostedBy={feedItem.type === 'repost' ? feedItem.item.user : null}
-                />
-              ))
-            : posts.map((post) => (
-                <Post key={post._id} post={post} />
-              ))}
-        </div>
-      )}
-    </>
+    <div className="space-y-4">
+      {feedType === "following"
+        ? posts.map((feedItem) => {
+            // Handle following feed structure
+            if (!feedItem || !feedItem.item) return null;
+            
+            return (
+              <Post
+                key={
+                  feedItem.item._id +
+                  (feedItem.type === "repost" ? "repost" : "")
+                }
+                post={
+                  feedItem.type === "repost"
+                    ? feedItem.item.post
+                    : feedItem.item
+                }
+                repostedBy={
+                  feedItem.type === "repost" ? feedItem.item.user : null
+                }
+              />
+            );
+          })
+        : posts.map((post) => {
+            // Handle regular posts
+            if (!post || !post._id) return null;
+            
+            return <Post key={post._id} post={post} />;
+          })}
+    </div>
   );
 };
 
