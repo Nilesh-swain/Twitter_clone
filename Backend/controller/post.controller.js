@@ -428,20 +428,34 @@ export const getUserPost = async (req, res) => {
 export const getBookmarkedPosts = async (req, res) => {
   try {
     const userId = req.user._id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const totalBookmarks = user.bookmarks.length;
     const bookmarkedPosts = await Post.find({ _id: { $in: user.bookmarks } })
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate("user", "-password")
       .populate({
         path: "comments.user",
         select: "-password",
       });
 
-    return res.status(200).json(bookmarkedPosts);
+    const hasMore = skip + bookmarkedPosts.length < totalBookmarks;
+
+    return res.status(200).json({
+      posts: bookmarkedPosts,
+      hasMore,
+      nextPage: hasMore ? page + 1 : null,
+      total: totalBookmarks
+    });
   } catch (error) {
     console.error("Error in getBookmarkedPosts:", error);
     res.status(500).json({ message: "Internal Server Error" });

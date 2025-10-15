@@ -166,8 +166,8 @@ export const postAPI = {
     });
   },
 
-  getBookmarkedPosts: async () => {
-    return apiRequest("/post/bookmarked");
+  getBookmarkedPosts: async (page = 1, limit = 10) => {
+    return apiRequest(`/post/bookmarked?page=${page}&limit=${limit}`);
   },
 
   getRepostedPosts: async (userId) => {

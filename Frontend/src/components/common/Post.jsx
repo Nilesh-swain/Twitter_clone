@@ -247,12 +247,10 @@ const Post = ({ post, repostedBy }) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["posts"] });
       await queryClient.cancelQueries({ queryKey: ["authUser"] });
-      await queryClient.cancelQueries({ queryKey: ["bookmarkedPosts"] });
 
       // Snapshot previous values
       const previousPosts = queryClient.getQueryData(["posts"]);
       const previousAuthUser = queryClient.getQueryData(["authUser"]);
-      const previousBookmarkedPosts = queryClient.getQueryData(["bookmarkedPosts"]);
 
       // Optimistically update authUser bookmarks
       queryClient.setQueryData(["authUser"], (old) => {
@@ -263,19 +261,7 @@ const Post = ({ post, repostedBy }) => {
         return { ...old, bookmarks };
       });
 
-      // Optimistically update bookmarkedPosts
-      queryClient.setQueryData(["bookmarkedPosts"], (old) => {
-        if (!old) return old;
-        if (isBookmarked) {
-          // Remove from bookmarked posts
-          return old.filter((p) => p._id !== post._id);
-        } else {
-          // Add to bookmarked posts
-          return [...old, post];
-        }
-      });
-
-      return { previousPosts, previousAuthUser, previousBookmarkedPosts };
+      return { previousPosts, previousAuthUser };
     },
     onSuccess: (data) => {
       toast.success(data.message);
@@ -285,15 +271,12 @@ const Post = ({ post, repostedBy }) => {
       if (context?.previousAuthUser) {
         queryClient.setQueryData(["authUser"], context.previousAuthUser);
       }
-      if (context?.previousBookmarkedPosts) {
-        queryClient.setQueryData(["bookmarkedPosts"], context.previousBookmarkedPosts);
-      }
       toast.error(err.message);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
-      queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
+      queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts", authUser?._id] });
     },
   });
 
