@@ -9,7 +9,8 @@ import RightPanel from "./components/common/RightPanel.jsx";
 import Notification from "./pages/notification/NotificationPage.jsx";
 import ProfilePage from "./pages/profile/ProfilePage.jsx";
 import SavedPage from "./pages/saved/SavedPage.jsx";
-import { MdHomeFilled, MdHome } from "react-icons/md";
+import HelpPage from "./pages/help/HelpPage.jsx";
+import { MdHomeFilled, MdHome, MdHelpOutline, MdHelp } from "react-icons/md";
 import { IoNotifications, IoNotificationsOutline } from "react-icons/io5";
 import { FaUser, FaRegUser } from "react-icons/fa";
 import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
@@ -45,6 +46,12 @@ function App() {
       href: "/saved",
       icon: BsBookmark,
       activeIcon: BsBookmarkFill,
+    },
+    {
+      name: "Help",
+      href: "/help",
+      icon: MdHelpOutline,
+      activeIcon: MdHelp,
     },
   ];
 
@@ -91,6 +98,7 @@ function App() {
             <Route path="/notification" element={<Notification />} />
             <Route path="/profile/:username" element={<ProfilePage />} />
             <Route path="/saved" element={<SavedPage />} />
+            <Route path="/help" element={<HelpPage />} />
           </Routes>
         </div>
 

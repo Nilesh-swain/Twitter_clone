@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth.js";
 import XSvg from "../svgs/X.jsx";
 import toast from "react-hot-toast";
-import { MdHomeFilled, MdHome } from "react-icons/md";
+import { MdHomeFilled, MdHome, MdHelpOutline, MdHelp } from "react-icons/md";
 import { IoNotifications, IoNotificationsOutline } from "react-icons/io5";
 import { FaUser, FaRegUser } from "react-icons/fa";
 import { BiLogOut } from "react-icons/bi";
@@ -62,6 +62,12 @@ const Sidebar = () => {
       href: "/saved",
       icon: BsBookmark,
       activeIcon: BsBookmarkFill,
+    },
+    {
+      name: "Help",
+      href: "/help",
+      icon: MdHelpOutline,
+      activeIcon: MdHelp,
     },
   ];
 
