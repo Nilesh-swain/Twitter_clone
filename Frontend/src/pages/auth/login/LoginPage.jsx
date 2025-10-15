@@ -1,7 +1,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../../contexts/AuthContext.jsx";
+import { useAuth } from "../../../contexts/useAuth.js";
 
 import XSvg from "../../../components/svgs/X";
 

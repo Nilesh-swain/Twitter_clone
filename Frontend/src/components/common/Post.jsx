@@ -1,7 +1,7 @@
 import { FaRegComment } from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
 import { FaRegHeart, FaHeart } from "react-icons/fa";
-import { FaRegBookmark } from "react-icons/fa6";
+import { FaRegBookmark, FaBookmark } from "react-icons/fa6";
 import { FaTrash } from "react-icons/fa";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import LoadingSpinner from "./LoadingSpinner";
 import { postAPI } from "../../utils/api.js";
-import { useAuth } from "../../contexts/AuthContext.jsx";
+import { useAuth } from "../../contexts/useAuth.js";
 
 const CommentItem = ({
   comment,
@@ -184,11 +184,58 @@ const Post = ({ post, repostedBy }) => {
     mutationFn: async () => {
       return postAPI.repostPost(post._id);
     },
+    onMutate: async () => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+      await queryClient.cancelQueries({ queryKey: ["authUser"] });
+
+      // Snapshot previous values
+      const previousPosts = queryClient.getQueryData(["posts"]);
+      const previousAuthUser = queryClient.getQueryData(["authUser"]);
+
+      // Optimistically update posts
+      queryClient.setQueryData(["posts"], (old) => {
+        if (!old) return old;
+        return old.map((p) =>
+          p._id === post._id
+            ? {
+                ...p,
+                reposts: isReposted
+                  ? p.reposts.filter((id) => id !== authUser._id)
+                  : [...p.reposts, authUser._id],
+              }
+            : p
+        );
+      });
+
+      // Optimistically update authUser reposts
+      queryClient.setQueryData(["authUser"], (old) => {
+        if (!old) return old;
+        const reposts = isReposted
+          ? old.reposts.filter((id) => id !== post._id)
+          : [...old.reposts, post._id];
+        return { ...old, reposts };
+      });
+
+      return { previousPosts, previousAuthUser };
+    },
     onSuccess: (data) => {
       toast.success(data.message);
-      queryClient.invalidateQueries(["posts"]); // Refresh posts to update repost count
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err, variables, context) => {
+      // Revert on error
+      if (context?.previousPosts) {
+        queryClient.setQueryData(["posts"], context.previousPosts);
+      }
+      if (context?.previousAuthUser) {
+        queryClient.setQueryData(["authUser"], context.previousAuthUser);
+      }
+      toast.error(err.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+    },
   });
 
   // Bookmark post mutation
@@ -196,11 +243,58 @@ const Post = ({ post, repostedBy }) => {
     mutationFn: async () => {
       return postAPI.bookmarkPost(post._id);
     },
+    onMutate: async () => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+      await queryClient.cancelQueries({ queryKey: ["authUser"] });
+      await queryClient.cancelQueries({ queryKey: ["bookmarkedPosts"] });
+
+      // Snapshot previous values
+      const previousPosts = queryClient.getQueryData(["posts"]);
+      const previousAuthUser = queryClient.getQueryData(["authUser"]);
+      const previousBookmarkedPosts = queryClient.getQueryData(["bookmarkedPosts"]);
+
+      // Optimistically update authUser bookmarks
+      queryClient.setQueryData(["authUser"], (old) => {
+        if (!old) return old;
+        const bookmarks = isBookmarked
+          ? old.bookmarks.filter((id) => id !== post._id)
+          : [...old.bookmarks, post._id];
+        return { ...old, bookmarks };
+      });
+
+      // Optimistically update bookmarkedPosts
+      queryClient.setQueryData(["bookmarkedPosts"], (old) => {
+        if (!old) return old;
+        if (isBookmarked) {
+          // Remove from bookmarked posts
+          return old.filter((p) => p._id !== post._id);
+        } else {
+          // Add to bookmarked posts
+          return [...old, post];
+        }
+      });
+
+      return { previousPosts, previousAuthUser, previousBookmarkedPosts };
+    },
     onSuccess: (data) => {
       toast.success(data.message);
-      queryClient.invalidateQueries(["authUser"]); // Refresh authUser to update bookmarks
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err, variables, context) => {
+      // Revert on error
+      if (context?.previousAuthUser) {
+        queryClient.setQueryData(["authUser"], context.previousAuthUser);
+      }
+      if (context?.previousBookmarkedPosts) {
+        queryClient.setQueryData(["bookmarkedPosts"], context.previousBookmarkedPosts);
+      }
+      toast.error(err.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
+    },
   });
 
   // Comment on post mutation
@@ -267,7 +361,7 @@ const Post = ({ post, repostedBy }) => {
     setReplyTo(null);
     setReplyText("");
   };
-
+                                                
   const handlePostReply = (e) => {
     e.preventDefault();
     if (!replyText.trim() || !replyTo) return;
@@ -382,7 +476,7 @@ const Post = ({ post, repostedBy }) => {
             </button>
 
             <button
-              className="flex items-center gap-3 p-3 rounded-full hover:bg-green-500/10 text-gray-400 hover:text-green-400 transition-all duration-200 group"
+              className="flex items-center gap-3 p-3 rounded-full hover:bg-blue-500/10 text-gray-400 hover:text-blue-400 transition-all duration-200 group"
               onClick={handleRepostPost}
             >
               <BiRepost className={`w-5 h-5 group-hover:scale-110 transition-transform ${isReposted ? "text-green-500" : ""}`} />
@@ -413,7 +507,11 @@ const Post = ({ post, repostedBy }) => {
               className="flex items-center gap-3 p-3 rounded-full hover:bg-blue-500/10 text-gray-400 hover:text-blue-400 transition-all duration-200 group"
               onClick={handleBookmarkPost}
             >
-              <FaRegBookmark className={`w-5 h-5 group-hover:scale-110 transition-transform ${isBookmarked ? "text-blue-500" : ""}`} />
+              {isBookmarked ? (
+                <FaBookmark className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
+              ) : (
+                <FaRegBookmark className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              )}
             </button>
           </div>
         </div>

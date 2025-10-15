@@ -1,24 +1,10 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { authAPI } from "../utils/api.js";
-
-const AuthContext = createContext();
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
+import { AuthContext } from "./useAuth.js";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // Check login state once on mount
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
+  const [loading, setLoading] = useState(true); // Set to true for initial check
 
   const checkAuthStatus = async () => {
     try {
@@ -30,7 +16,7 @@ export const AuthProvider = ({ children }) => {
       setUser(currentUser);
       console.log("✅ Authenticated user:", currentUser);
     } catch (error) {
-      if (error.response && error.response.status === 401) {
+      if (error.status === 401) {
         console.log("⚠️ User not authenticated");
       } else {
         console.error("❌ Auth check failed:", error);
@@ -40,6 +26,11 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
+  // Check auth status on app load
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
 
   const login = async (credentials) => {
     try {
@@ -74,6 +65,8 @@ export const AuthProvider = ({ children }) => {
       console.error("⚠️ Logout error:", error);
     } finally {
       setUser(null); // Always clear local state
+      // Optionally, redirect to login page or refresh the page
+      window.location.href = '/login'; // Force redirect to login page
     }
   };
 

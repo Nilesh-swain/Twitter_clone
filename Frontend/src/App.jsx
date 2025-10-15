@@ -1,5 +1,5 @@
 import { Routes, Route, Link, useLocation } from "react-router-dom";
-import { useAuth } from "./contexts/AuthContext.jsx";
+import { useAuth } from "./contexts/useAuth.js";
 import HomePage from "./pages/home/HomePage.jsx";
 import SignUpPage from "./pages/auth/signup/SignUpPage.jsx";
 import LoginPage from "./pages/auth/login/LoginPage.jsx";
@@ -69,7 +69,7 @@ function App() {
       <Routes>
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="*" element={<SignUpPage />} />
+        <Route path="*" element={<LoginPage />} />
       </Routes>
     );
   }

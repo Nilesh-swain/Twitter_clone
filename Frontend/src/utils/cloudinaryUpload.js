@@ -1,4 +1,4 @@
-import { postAPI } from "./api.js";
+
 
 // Function to get Cloudinary upload signature from backend
 export const getUploadSignature = async () => {

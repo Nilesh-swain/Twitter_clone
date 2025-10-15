@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext.jsx";
+import { useAuth } from "../../contexts/useAuth.js";
 import XSvg from "../svgs/X.jsx";
 import toast from "react-hot-toast";
 import { MdHomeFilled, MdHome } from "react-icons/md";

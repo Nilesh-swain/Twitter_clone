@@ -3,7 +3,7 @@ import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
 import { postAPI } from "../../utils/api.js";
-import { useAuth } from "../../contexts/AuthContext.jsx";
+import { useAuth } from "../../contexts/useAuth.js";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { uploadImageToCloudinary } from "../../utils/cloudinaryUpload.js";

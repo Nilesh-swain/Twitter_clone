@@ -65,7 +65,7 @@ import { useQuery } from "@tanstack/react-query";
 import Post from "./Post.jsx";
 import PostSkeleton from "../skeletons/PostSkeleton.jsx";
 import { postAPI } from "../../utils/api.js";
-import { useAuth } from "../../contexts/AuthContext.jsx";
+import { useAuth } from "../../contexts/useAuth.js";
 
 const fetchPosts = async (feedType) => {
   try {

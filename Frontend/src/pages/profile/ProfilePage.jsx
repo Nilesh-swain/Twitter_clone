@@ -11,7 +11,7 @@ import Post from "../../components/common/Post";
 import PostSkeleton from "../../components/skeletons/PostSkeleton";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
 import EditProfileModal from "./EditProfileModal";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/useAuth.js";
 import { userAPI, postAPI } from "../../utils/api";
 import useFollowUnfollow from "../../hooks/usefollow";
 
