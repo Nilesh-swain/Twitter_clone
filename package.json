@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "start": "cd Backend && npm run build && npm start"
-    
+    "build": "cd Backend && npm install && cd ../Frontend && rm -rf node_modules package-lock.json && NODE_ENV=production npm install && npm run build && mkdir -p ../Backend/dist && cp -r dist ../Backend/dist",
+    "start": "cd Backend && npm start"
   },
   "dependencies": {
     "nodemailer": "^7.0.6",
@@ -11,3 +11,4 @@
     "node": "20.x"
   }
 }
+
