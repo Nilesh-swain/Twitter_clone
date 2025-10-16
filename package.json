@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "cd Backend && npm install && cd ../Frontend && rm -rf node_modules package-lock.json && export NODE_ENV=production && npm install && npm run build && mkdir -p ../Backend/dist && cp -r dist ../Backend/dist",
+    "build": "cd Backend && npm install && cd ../Frontend && rmdir /s /q node_modules && del package-lock.json && set NODE_ENV=production && npm install && npm run build && mkdir ../Backend\\dist 2>nul || mkdir ../Backend\\dist && xcopy /e /i /y dist ../Backend\\dist",
     "start": "cd Backend && npm start"
   },
   "dependencies": {
