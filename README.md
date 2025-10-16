@@ -59,7 +59,7 @@ git clone <repository-url>
 cd twitter-clone
 ```
 
-2. Install dependencies:
+1. Install dependencies:
 
 ```bash
 # Install root dependencies
@@ -74,11 +74,11 @@ cd ../Frontend
 npm install
 ```
 
-3. Set up environment variables:
+1. Set up environment variables:
    Create a `.env` file in the `Backend` directory:
 
 ```env
-MONGO_URI=mongodb://localhost:27017/twitter-clone
+MONGO_URI=XYZ
 JWT_SECRET=your_jwt_secret_here
 PORT=9000
 CLIENT_URL=http://localhost:5173
@@ -97,7 +97,7 @@ npm run dev
 
 ## Project Structure
 
-```
+```text
 twitter-clone/
 ├── Backend/
 │   ├── controller/          # Route controllers
@@ -169,4 +169,4 @@ This project is licensed under the MIT License.
 
 ## Support
 
-For support, email your-email@example.com or create an issue in the repository.
+For support, email [your-email@example.com](mailto:your-email@example.com) or create an issue in the repository.
