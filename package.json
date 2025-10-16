@@ -1,6 +1,9 @@
 {
+  "name": "twitter-clone",
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "build": "cd Backend && npm install && cd ../Frontend && rm -rf node_modules package-lock.json && NODE_ENV=production npm install && npm run build && mkdir -p ../Backend/dist && cp -r dist ../Backend/dist",
+    "build": "cd Backend && npm install && cd ../Frontend && rm -rf node_modules && NODE_ENV=production npm install && npm run build && mkdir -p ../Backend/dist && cp -r dist ../Backend/dist",
     "start": "cd Backend && npm start"
   },
   "dependencies": {
@@ -11,4 +14,3 @@
     "node": "20.x"
   }
 }
-
