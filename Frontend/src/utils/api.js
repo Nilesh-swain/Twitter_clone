@@ -1,4 +1,19 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+// For production deployments, if the app is served from a subdirectory,
+// we need to handle the base path properly
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  // In production, if the app is served from a subdirectory, adjust API calls
+  if (import.meta.env.PROD && window.location.pathname.startsWith('/Twitter_clone/')) {
+    return '/Twitter_clone/api';
+  }
+
+  return '/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Helper function to make API requests
 const apiRequest = async (endpoint, options = {}) => {

@@ -40,11 +40,39 @@ const port = process.env.PORT || 9000;
 // CORS configuration
 app.use(
   cors({
-    origin: [
-      process.env.CLIENT_URL || "http://localhost:5173",
-      "http://localhost:3001",
-      "https://ns-twitter.onrender.com"
-    ],
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      const allowedOrigins = [
+        process.env.CLIENT_URL || "http://localhost:5173",
+        "http://localhost:3001",
+        "https://ns-twitter.onrender.com",
+        // Add common deployment patterns
+        /^https?:\/\/.*\.vercel\.app$/,
+        /^https?:\/\/.*\.netlify\.app$/,
+        /^https?:\/\/.*\.github\.io$/,
+        /^https?:\/\/.*\.railway\.app$/,
+        /^https?:\/\/.*\.render\.com$/
+      ];
+
+      // Check if the origin matches any allowed pattern
+      const isAllowed = allowedOrigins.some(allowedOrigin => {
+        if (typeof allowedOrigin === 'string') {
+          return allowedOrigin === origin;
+        } else if (allowedOrigin instanceof RegExp) {
+          return allowedOrigin.test(origin);
+        }
+        return false;
+      });
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS blocked origin: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );
